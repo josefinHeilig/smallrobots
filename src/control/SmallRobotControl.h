@@ -30,6 +30,7 @@
 #include <Arduino.h>
 #include <OSCMessage.h>
 
+
 namespace SmallRobots {
 
 
@@ -55,5 +56,6 @@ namespace SmallRobots {
 
 
   extern SmallRobotControl osc_control;
-
+  extern AsyncUDP udp;
+  
 };
