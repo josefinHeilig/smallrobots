@@ -6,7 +6,7 @@
 namespace SmallRobots {
 
 
-Vector rotation (Vector dir, float angle)
+Vector rotation (Vector& dir, float& angle)
 {
   float r = (angle);
   float xx  =  dir.x * cos ((r)) -  dir.y * sin ((r));
@@ -15,13 +15,13 @@ Vector rotation (Vector dir, float angle)
   return P;
 };
 
-float circularArcLengthCW (Vector dirA, Vector A, Vector B, float radius) {
+float circularArcLengthCW (Vector& dirA, Vector& A, Vector& B, float& radius) {
   float alpha = circularArcAngleCW(dirA, A, B);
   float s = radius * alpha;
   return s;
 };
 
-float circularArcAngleCW( Vector dirA, Vector A, Vector B) {
+float circularArcAngleCW( Vector& dirA, Vector& A, Vector& B) {
   Vector unitA = unit(dirA);
   Vector AB = B - A;
   float sca = scalarProduct(unitA, AB);
@@ -30,13 +30,13 @@ float circularArcAngleCW( Vector dirA, Vector A, Vector B) {
   return alpha;
 };
 
-float circularArcLengthCCW (Vector dirA, Vector A, Vector B, float radius) {
+float circularArcLengthCCW (Vector& dirA, Vector& A, Vector& B, float& radius) {
   float alpha = circularArcAngleCCW(dirA, A, B);
   float s = radius * alpha;
   return s;
 }
 
-float circularArcAngleCCW( Vector dirA, Vector A, Vector B) {
+float circularArcAngleCCW( Vector& dirA, Vector& A, Vector& B) {
   Vector unitA = unit(dirA);
   Vector AB = B - A;
   float sca = scalarProduct(unitA, AB);
@@ -48,7 +48,7 @@ float circularArcAngleCCW( Vector dirA, Vector A, Vector B) {
 
 
 
-Vector crossProduct (Vector A, Vector B)
+Vector crossProduct (Vector& A, Vector& B)
 {
   Vector C ;
 
@@ -59,18 +59,18 @@ Vector crossProduct (Vector A, Vector B)
   return C;
 };
 
-float scalarProduct(Vector A, Vector B)
+float scalarProduct(Vector& A, Vector& B)
 {
   float scalar = A.x*B.x + A.y*B.y + A.z*B.z;
   return scalar;
 };
 
-float magnitude (Vector A)
+float magnitude (Vector &A)
 {
     float mag = sqrt(  A.x*A.x + A.y*A.y + A.z*A.z);
     return mag;
 };
-Vector unit (Vector A)
+Vector unit (Vector &A)
 {
     Vector U;
     float mag = magnitude(A);
@@ -83,7 +83,7 @@ Vector unit (Vector A)
     return U;
 }
 
- float distance (Vector A, Vector B)
+ float distance (Vector& A, Vector& B)
  {
     float dist = sqrt( (B.x - A.x)*(B.x - A.x) + (B.y - A.y)*(B.y - A.y)  +  (B.z - A.z)*(B.z - A.z) );
     return dist;

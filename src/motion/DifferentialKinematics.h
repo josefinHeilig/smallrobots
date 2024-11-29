@@ -12,12 +12,6 @@
 
 namespace SmallRobots {
 
-    // typedef struct 
-    // {
-    //     float x = 0;
-    //     float y = 0;
-    //     float angle = 0;
-    // } Pose;
 
     class DifferentialKinematics {
         public:
@@ -28,7 +22,7 @@ namespace SmallRobots {
 
             virtual void move(float speed, float radius = RADIUS_STREIGHT);
             virtual void rotate(float speed);
-            virtual void stop();
+            virtual void stop()= 0;
             virtual void enable() = 0;
             virtual void disable() = 0;
             virtual MotorsPosition getMotorsPosition() = 0;
@@ -46,6 +40,14 @@ namespace SmallRobots {
             float wheel_radius;
             float wheel_circumference;
             float default_speed;
+        private:
+            Pose pose;
+            float R;
+            float vRobotAng;
+            Vector ICC;
+            float deltaTseconds;
+
+
     };
 
 
@@ -68,11 +70,21 @@ namespace SmallRobots {
             Vector T7, T8, T9, T10, T11, T12; //tangent points, L first
             Vector T5dir, T11dir;
 
-            String name = "Dubin";
+            String *name;
             String allNames [6] = {"RSL", "RSR", "RLR", "LSR", "LSL", "LRL"};
             float allLength [6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; //order: RSLlen, RSRlen, RLRlen, LSRlen, LSLlen, LRLlen
             int shortestPathIndex = -1; //0=RSL, 1=RSR, 2=RLR, 3=LSR, 4=LSL, 5=LRL
 
+            //helpers
+            Vector unitV;
+            Vector cross;
+            Vector a, b, c, d;
+            float alpha;
+            Vector u, v;
+            Vector RSL;
+            Vector w;
+            Vector sub;
+            Vector LSR;
 
         public:
             DifferentialPathPlanner();
@@ -151,12 +163,13 @@ namespace SmallRobots {
             float arriveAngleDistance = 0;
 
             String curDirName = "N";
+            Vector curV;
 
         public:
 
                     
                     
-            MotionController(DifferentialKinematics& kinematics); //, DifferentialPathPlanner& pathPlanner);
+            MotionController(DifferentialKinematics& drive); //, DifferentialPathPlanner& pathPlanner);
             ~MotionController();
 
 

@@ -8,7 +8,7 @@
 #include "DifferentialKinematics.h"
 #include "Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 100 //ms
+#define ODOMETRY_UPDATE_RATE_TIMEOUT 1000 //ms
 
 namespace SmallRobots {
 
@@ -34,9 +34,10 @@ namespace SmallRobots {
         TRANSITION(moving2arrived_at_tangentB, finished_seg2, moving, arrived_at_tangentB);
         TRANSITION(arrived_at_tangentB2moving, start_seg3, arrived_at_tangentB, moving);
         TRANSITION(moving2arrived_at_target_pose, finished_seg3, moving, arrived_at_target_pose);
-        TRANSITION(arrived_at_target_pose2idle, wait, arrived_at_target_pose, idle);
-        TRANSITION(moving2waiting,wait, moving, waiting);
-        TRANSITION(waiting2moving,move, waiting, moving);
+        TRANSITION(arrived_at_target_pose2idle, next, arrived_at_target_pose, idle);
+        // TRANSITION(moving2waiting,wait, moving, waiting);
+        // TRANSITION(waiting2moving,waiting_timeout, waiting, moving); //timeout needs:  trigger(current_state->name+"_timeout");
+        TRANSITION(moving2moving,moving_timeout, moving, moving);
         TRANSITION(arrived_at_target_pose2new_target_pose, follow_path,arrived_at_target_pose,new_target_pose);
 
         TRANSITION(moving2idle, pause, moving, idle);
@@ -52,8 +53,9 @@ namespace SmallRobots {
                                         &arrived_at_tangentB2moving,
                                         &moving2arrived_at_target_pose,
                                         &arrived_at_target_pose2idle,
-                                        &moving2waiting,
-                                        &waiting2moving,
+                                        &moving2moving,
+                                        //&moving2waiting,
+                                        //&waiting2moving,
                                         &arrived_at_target_pose2new_target_pose,
 
                                         &moving2idle
@@ -67,7 +69,8 @@ namespace SmallRobots {
             moving.enter = std::bind(&MotionStateMachine::on_enter_moving, this);
             idle.enter =  std::bind(&MotionStateMachine::on_enter_idle, this);
 
-            waiting.timeout = ODOMETRY_UPDATE_RATE_TIMEOUT;
+            //waiting.timeout = ODOMETRY_UPDATE_RATE_TIMEOUT;
+            moving.timeout = ODOMETRY_UPDATE_RATE_TIMEOUT;
 
             moving2idle.on = std::bind(&MotionStateMachine::on_pause, this);
             idle2new_target_pose.on =  std::bind(&MotionStateMachine::on_go, this);
@@ -83,23 +86,30 @@ namespace SmallRobots {
              
         void on_go()
         {
-            ctrl.enableMotors();
+           ctrl.enableMotors();
         };
         
         
         void on_enter_idle()
         {
-           
+            if (first_on) {
+                Serial.println("Motion idle -  disable Motors");
+                ctrl.stopMoving();
+                first_on = false;
+            }
 
         };
 
         void on_enter_new_target_pose() { 
             //reset subPathIndex
             subPathIndex = 0;
-            
+            Serial.println("ctrl.setTarget()");
             ctrl.setTarget();
+            Serial.println("ctrl.setWheelVelocitiesSeg1()");
             ctrl.setWheelVelocitiesSeg1();
+            Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
+            Serial.println("machine.trigger(start_seg1)");
             machine.trigger("start_seg1");
         };
         void on_enter_arrived_at_tangentA() { 
@@ -143,12 +153,17 @@ namespace SmallRobots {
 
                 subPathIndex++;
             } 
-            else machine.trigger("move");
+           // else machine.trigger("wait");
         };
 
         void trigger(String arg)
         {
             machine.trigger(arg);
+        };
+
+        void triggerSetNewPose()
+        {
+            machine.trigger("set_new_pose");
         };
 
         void start(){
@@ -163,6 +178,7 @@ namespace SmallRobots {
         protected:
             MotionController& ctrl;
             Odometry odometry = Odometry(ctrl.kinematics);
+            bool first_on = true;
         
 
 
