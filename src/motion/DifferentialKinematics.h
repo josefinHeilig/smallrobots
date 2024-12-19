@@ -8,7 +8,7 @@
 
 
 #define RADIUS_STREIGHT (std::numeric_limits<float>::infinity())
-
+#define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why?
 
 namespace SmallRobots {
 
@@ -18,28 +18,50 @@ namespace SmallRobots {
             DifferentialKinematics(float _wheel_base, float wheel_diameter);
             ~DifferentialKinematics();
 
-            virtual void setSpeed(float left, float right) = 0;
+            //move
+            //straight: only speed, posive: forward, negative: backward
+            //rotate: speed and radius = 0: speed positive ->rotate ccw, speed negative -> rotate cw
+            //left arc forward / ccw: speed and radius positive
+            //right arc forward /cw : speed and radius negative
+            //left arc backward / ccw: speed negative and radius positive
+            //right arc backward /cw : speed positive and radius negative
 
-            virtual void move(float speed, float radius = RADIUS_STREIGHT);
+            virtual void move(float speed, float radius = RADIUS_STREIGHT); 
+            virtual void turnLeftForward(float speed, float radius);
+            virtual void turnRightForward(float speed, float radius);
+            virtual void turnLeftBackward(float speed, float radius);
+            virtual void turnRightBackward(float speed, float radius);
+
             virtual void rotate(float speed);
-            virtual void stop()= 0;
+
+            virtual void setSpeed(float left, float right) = 0;
+            virtual void stop() = 0;
             virtual void enable() = 0;
             virtual void disable() = 0;
-            virtual MotorsPosition getMotorsPosition() = 0;
-            virtual MotorsVelocity getMotorsVelocity() = 0;
+
 
             float wheel_dist_to_rad (float dist);
             float wheel_rad_to_dist (float rad);
 
-            Pose wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose);
+            float shaft_vel_to_wheel_vel_rad(float rad);
+
+            Pose wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose,String curDirName);
             float poseToLeftWheelDist (Pose pose);
             float poseToRightWheelDist (Pose pose);
+
+            virtual MotorsPosition getMotorsPosition()=0;
+            virtual MotorsVelocity getMotorsVelocity()=0;
 
             float wheel_base;
             float half_wheel_base;
             float wheel_radius;
             float wheel_circumference;
             float default_speed;
+
+            float minRadius = MINRADIUS; //TODO remove duplicate variable in PathPlanner
+
+            float globalCoordinateSystemOffsetAngle = PI/2.0;
+
         private:
             Pose pose;
             float R;
@@ -47,7 +69,9 @@ namespace SmallRobots {
             Vector ICC;
             float deltaTseconds;
 
-
+            //ODOMETRY MOTOR
+            Pose curPose = Pose(0,0,0);            
+            int lastTime=0, deltaT=0; //delat T, read in millis,later converted to seconds to get m/s as unit ???
     };
 
 
@@ -60,7 +84,7 @@ namespace SmallRobots {
             Vector Sdir, Edir; //direction vector rotated around angle of pose
 
             Vector unitX = Vector(1,0,0);
-            Vector unitZ = Vector(0,0,1); 
+            Vector unitZ = Vector(0,0,1);
 
             Vector R1, R2, R3, L1, L2, L3;
 
@@ -110,7 +134,7 @@ namespace SmallRobots {
             int getShortestPathIndex ();
             String getShortestPathName();
 
-            float minRadius = 5.0; //radius of dubin path, variable
+            float minRadius = MINRADIUS; //radius of dubin path, variable
 
             Vector arcCenter1;
             float arcRadius1 = minRadius;
@@ -133,62 +157,5 @@ namespace SmallRobots {
 
     };
 
-      class MotionController {
-
-        private:
-
-            std::vector<Pose> path;
-            int curPathIndex = 0;
-
-
-            Pose curPose;
-            Pose targetPose;
-
-            float default_speed =0.01;
-            float default_speed_Ang = radians(0.05);
-
-
-            Vector ICC; //Instantaneous Center of Curvature
-            float R = 0; //dist between robot's pose and its ICC
-
-            float vRobot =0;
-            float vRobotAng = 0;
-
-            float vR =0.00;
-            float vL =0.00;
-
-            float targetAngle=0;
-
-            float arriveDistance = 0.01; //precission of arriving behaviour
-            float arriveAngleDistance = 0;
-
-            String curDirName = "N";
-            Vector curV;
-
-        public:
-
-                    
-                    
-            MotionController(DifferentialKinematics& drive); //, DifferentialPathPlanner& pathPlanner);
-            ~MotionController();
-
-
-            void addPoseToPath(Pose p);
-            void setPoseToReplacePath(Pose p);
-            void setTarget(); //get next pose in path, calculate dubin path from current pose and target pose
-            void setWheelVelocitiesSeg1(); //ARC left or right with minRad
-            void setWheelVelocitiesSeg2(); //STRAIGHT or left or right ARC
-            void setWheelVelocitiesSeg3(); //ARC left or right
-            void stopMoving();
-            void enableMotors();
-
-            void setCurPose(Pose pose);
-
-            void loopPath();
-            bool checkIfArrived();
-
-            DifferentialKinematics& kinematics;
-            DifferentialPathPlanner pathPlanner = DifferentialPathPlanner();
-    };
 
 }; // namespace SmallRobots

@@ -31,13 +31,19 @@ namespace SmallRobots {
     } Pose;
 
 
-    // typedef struct 
-    //     {
-    //         float x = 0;
-    //         float y = 0;
-    //         float z = 0;
-    //     } Vector;
+    typedef struct 
+        {
+            float r = 0;
+            float g = 0;
+            float b = 0;
+        } RGBColor;
 
+    enum PATHBEHAVIOURS {
+
+        PAUSE,
+        LOOP,
+        END,
+    };
 
     class Vector {
 

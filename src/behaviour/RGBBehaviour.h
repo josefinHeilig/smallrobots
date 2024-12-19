@@ -27,6 +27,7 @@ enum RGB_STATUS{
   WIFI_STATUS_CONNECTED,
   WIFI_STATUS_FAILED,
   BATTERY_STATUS,
+  BATTERY_STATUS_WARN,
   OFF,
   GENERATE,
   FROM_WIFI
@@ -42,8 +43,10 @@ namespace SmallRobots {
 
 
    class RGBBehaviour : public Behaviour {
+
+
         public:
-            RGBBehaviour() : Behaviour(RGBLED_UPDATE_RATE) {
+            RGBBehaviour(RGBLedService& _rgbService): Behaviour(RGBLED_UPDATE_RATE), rgbService(_rgbService) {
 
                 rgbService.setup();
 
@@ -82,16 +85,23 @@ namespace SmallRobots {
                     rgbService.setFinalCol(0,0,255);
                     rgbService.allShow();
                     break;
+
                     case WIFI_STATUS_CONNECTED:
                     printf("WIFI_STATUS_CONNECTED");
                     break;
+
                     case WIFI_STATUS_FAILED:
                     printf("WIFI_STATUS_FAILED");
                     break;
 
                     case BATTERY_STATUS:
-                    //rgbService.showBatteryStatus();
+                    rgbService.setBatteryStatus();
+                    rgbService.allShow();
+                    break;
 
+                    case BATTERY_STATUS_WARN:
+                    rgbService.setBatteryStatus();
+                    rgbService.allBlink();
                     break;
                     case OFF:
                     rgbService.allOff();
@@ -117,7 +127,7 @@ namespace SmallRobots {
 
         protected:
             String name = "RGBBehaviour";
-            RGBLedService rgbService;
+            RGBLedService& rgbService;
             
     };
         

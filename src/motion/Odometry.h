@@ -10,7 +10,7 @@ class Odometry {
             Odometry(DifferentialKinematics& _kinematics);
             
             ~Odometry();
-            void updatePose();
+            void updatePose(String curDirName);
             void resetLastTime();
             int updateDeltaT();
             Pose getCurPose();

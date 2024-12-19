@@ -5,10 +5,10 @@
 #include "control/SmallRobotEventBus.h"
 
 #include "StateMachine.h"
-#include "DifferentialKinematics.h"
+#include "MotionController.h"
 #include "Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 1000 //ms
+#define ODOMETRY_UPDATE_RATE_TIMEOUT 100 //ms
 
 namespace SmallRobots {
 
@@ -25,7 +25,7 @@ namespace SmallRobots {
         STATE(arrived_at_tangentA);
         STATE(arrived_at_tangentB);
         STATE(arrived_at_target_pose);
-        STATE(waiting); //for not requesting odometry infos too fast
+
 
         TRANSITION(idle2new_target_pose,set_new_pose, idle, new_target_pose);
         TRANSITION(new_target_pose2moving, start_seg1,new_target_pose, moving);
@@ -35,12 +35,12 @@ namespace SmallRobots {
         TRANSITION(arrived_at_tangentB2moving, start_seg3, arrived_at_tangentB, moving);
         TRANSITION(moving2arrived_at_target_pose, finished_seg3, moving, arrived_at_target_pose);
         TRANSITION(arrived_at_target_pose2idle, next, arrived_at_target_pose, idle);
-        // TRANSITION(moving2waiting,wait, moving, waiting);
-        // TRANSITION(waiting2moving,waiting_timeout, waiting, moving); //timeout needs:  trigger(current_state->name+"_timeout");
         TRANSITION(moving2moving,moving_timeout, moving, moving);
         TRANSITION(arrived_at_target_pose2new_target_pose, follow_path,arrived_at_target_pose,new_target_pose);
 
         TRANSITION(moving2idle, pause, moving, idle);
+        TRANSITION(idle2moving, startOdometry, idle, moving);
+
 
        
         MotionStateMachine(MotionController& _ctrl) : ctrl(_ctrl){
@@ -54,11 +54,10 @@ namespace SmallRobots {
                                         &moving2arrived_at_target_pose,
                                         &arrived_at_target_pose2idle,
                                         &moving2moving,
-                                        //&moving2waiting,
-                                        //&waiting2moving,
                                         &arrived_at_target_pose2new_target_pose,
 
-                                        &moving2idle
+                                        &moving2idle,
+                                        &idle2moving
                                         };
             machine.initial_state = &idle;
 
@@ -74,13 +73,14 @@ namespace SmallRobots {
 
             moving2idle.on = std::bind(&MotionStateMachine::on_pause, this);
             idle2new_target_pose.on =  std::bind(&MotionStateMachine::on_go, this);
+            idle2moving.on = std::bind(&MotionStateMachine::on_start_odometry,this);
         };
         ~MotionStateMachine() {};
 
         
         void on_pause()
         {
-            ctrl.stopMoving();
+            ctrl.stop();
         };
 
              
@@ -94,42 +94,73 @@ namespace SmallRobots {
         {
             if (first_on) {
                 Serial.println("Motion idle -  disable Motors");
-                ctrl.stopMoving();
+                ctrl.stop();
                 first_on = false;
             }
 
         };
 
         void on_enter_new_target_pose() { 
-            //reset subPathIndex
-            subPathIndex = 0;
+            
             Serial.println("ctrl.setTarget()");
-            ctrl.setTarget();
+            ctrl.setTarget();                          
+
+            Serial.println("odometry.resetLastTime()");
+            odometry.resetLastTime();     
+
             Serial.println("ctrl.setWheelVelocitiesSeg1()");
-            ctrl.setWheelVelocitiesSeg1();
+            ctrl.setWheelVelocitiesSeg1();              
+
+            Serial.println("machine.trigger(start_seg1)");
+            machine.trigger("start_seg1");             
+
+            //reset subPathIndex
+            Serial.println("reset subPathIndex to 0");
+            subPathIndex = 0;
+        };
+
+        void on_enter_arrived_at_tangentA() { 
             Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
-            Serial.println("machine.trigger(start_seg1)");
-            machine.trigger("start_seg1");
-        };
-        void on_enter_arrived_at_tangentA() { 
+            Serial.println("ctrl.setWheelVelocitiesSeg2()");
             ctrl.setWheelVelocitiesSeg2();
-            odometry.resetLastTime();
             machine.trigger("start_seg2");
         };
 
         void on_enter_arrived_at_tangentB() { 
-            ctrl.setWheelVelocitiesSeg3();
+            Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
+            Serial.println("ctrl.setWheelVelocitiesSeg3()");
+            ctrl.setWheelVelocitiesSeg3();
             machine.trigger("start_seg3");
         };
 
+        void on_start_odometry(){
+            Serial.println("odometry.resetLastTime()");
+            odometry.resetLastTime();
+        };
+
         void on_enter_arrived_at_target_pose() { 
+
+            if (ctrl.pathBehaviour == LOOP)
+            {
+                ctrl.loopPath(); //counts up the pathIndex, if reached end, restarts from beginning, returns false if only one Pose in path
+                machine.trigger("set_new_pose");
+            }
+            else if (ctrl.pathBehaviour ==END)
+            {
+                ctrl.stopMoving();
+            }
             //stop moving, give feedback that next pose in path can be executed
             //if next pose in path -> go to new pose
-            ctrl.loopPath();
-            machine.trigger("set_new_pose");
-            //otherwise stop moving TODO
+            // if (ctrl.loopPath())
+            // {
+            //     machine.trigger("set_new_pose");
+            // } else
+            // {
+            // //otherwise stop moving TODO
+            //     ctrl.stopMoving();
+            // }
             //ctrl.stopMoving();
 
         };
@@ -140,18 +171,35 @@ namespace SmallRobots {
             //no -> repeat this state
             //yes -> move to next state 
            
-            odometry.updatePose();
+            odometry.updatePose(ctrl.curDirName);          //seems to work
+
             Pose curPose = odometry.getCurPose();
-            ctrl.setCurPose(curPose);
-
-            Serial.println ("curPose : " + (String) curPose.x+ (String) curPose.y+ (String) curPose.angle) ;
             
-            if (ctrl.checkIfArrived()){
-                if (subPathIndex == 0) machine.trigger("finished_seg1");
-                else if (subPathIndex == 1) machine.trigger("finished_seg2");
-                else if (subPathIndex == 2) machine.trigger("finished_seg3");
 
-                subPathIndex++;
+            //Serial.println ("curPose : " + (String) curPose.x+ ", " +(String) curPose.y+ ", " + (String) (curPose.angle)) ;
+            
+            ctrl.setCurPose(curPose);
+            if (ctrl.checkIfArrived()){
+                Serial.println (subPathIndex);
+                if (subPathIndex == 0){
+                    Serial.println ("FINISHED SEG 1");
+                    machine.trigger("finished_seg1");
+                    subPathIndex=1;
+                }
+                else if (subPathIndex == 1){
+                    Serial.println ("FINISHED SEG 2");
+                    machine.trigger("finished_seg2");
+                    subPathIndex=2;
+                    
+                }
+                else if (subPathIndex == 2) {
+                    Serial.println ("FINISHED SEG 3");
+                    machine.trigger("finished_seg3");
+                    subPathIndex=0;
+                    
+                }
+
+                
             } 
            // else machine.trigger("wait");
         };

@@ -2,6 +2,8 @@
 
 #include "./DifferentialKinematics.h"
 
+
+
 namespace SmallRobots {
 
     DifferentialKinematics::DifferentialKinematics(float _wheel_base, float wheel_diameter) {
@@ -15,65 +17,235 @@ namespace SmallRobots {
     DifferentialKinematics::~DifferentialKinematics() {
     };
 
-   
 
 
-    void DifferentialKinematics::move(float speed, float radius) { //negative radius when leftturn = counterclockwise
+
+    void DifferentialKinematics::move(float speed, float radius) { //negative radius + negative speed when leftturn = counterclockwise
+        
+        //speed in mm/s for straight
+        //speed in mm/s for movement on arc
+
+     
         if (radius == RADIUS_STREIGHT) {
-            setSpeed(speed, speed);
+            float wheelSpeed = speed /wheel_circumference* 2*PI;
+            setSpeed(wheelSpeed, -wheelSpeed);
         }
         else if (radius == 0.0) {
-            setSpeed(speed, -speed);
+            float wheelSpeed = speed / half_wheel_base;
+            setSpeed(-wheelSpeed, -wheelSpeed); //TO BE CHECKED
         }
         else {
-            float left = speed * (radius + half_wheel_base);
-            float right = speed * (radius - half_wheel_base);
+
+            float angularSpeed = speed / abs(radius);
+            if (abs(radius) <= wheel_base) angularSpeed = speed / wheel_base;
+            
+
+            //R is ICC to the center of the robot
+            // // LEFT ARC (+radius) FORWARD (+speed) or BACKWARD (-speed)
+            float left =   (radius - half_wheel_base) * angularSpeed /wheel_radius;
+            float right = -(radius + half_wheel_base) * angularSpeed /wheel_radius;
+
+            //RIGHT ARC (-radius) FORWARD (-speed) or BACKWARD (+speed)
+            if(radius <0 ) {
+                radius = abs(radius);
+                left =   (radius + half_wheel_base) * angularSpeed /wheel_radius;
+                right = -(radius - half_wheel_base) * angularSpeed /wheel_radius;
+            }
+
+            //WORKS TOO
+            //R is ICC to the outside wheel of the robot
+            // // LEFT ARC (+radius) FORWARD (+speed) or BACKWARD (-speed)
+            // float left =   (radius) * angularSpeed /wheel_radius;
+            // float right = -(radius + 2* half_wheel_base) * angularSpeed /wheel_radius;
+            
+            // //RIGHT ARC (-radius) FORWARD (-speed) or BACKWARD (+speed)
+            // if(radius <0 ) {
+            //     radius = abs(radius);
+            //     left =   (radius + 2* half_wheel_base) * angularSpeed /wheel_radius;
+            //     right = -(radius ) * angularSpeed /wheel_radius;
+            // }
+          
+            Serial.println("left: " + (String) left + " , right: " + (String) right);
             setSpeed(left, right);
         }
     };
 
+    void DifferentialKinematics::turnLeftForward(float speed, float radius){
+
+        float left =   (radius ) * speed /wheel_radius;
+        float right = -(radius + 2* half_wheel_base) * speed /wheel_radius;
+
+        Serial.println("TURN LEFT FORWARD");
+        Serial.println("left: " + (String) left + " , right: " + (String) right);
+        setSpeed(left, right);
+
+    };
+    void DifferentialKinematics::turnRightForward(float speed, float radius){
+
+        float left =   (radius + 2* half_wheel_base ) * speed /wheel_radius;
+        float right = -(radius ) * speed /wheel_radius;
+
+        Serial.println("TURN RIGHT FORWARD");
+        Serial.println("left: " + (String) left + " , right: " + (String) right);
+        setSpeed(left, right);
+
+    };
+
+        void DifferentialKinematics::turnLeftBackward(float speed, float radius){
+
+        float left =   (radius ) * speed /wheel_radius;
+        float right = -(radius + 2* half_wheel_base) * speed /wheel_radius;
+
+        Serial.println("TURN LEFT BACKWARD");
+        Serial.println("left: " + (String) left + " , right: " + (String) right);
+        setSpeed(left, right);
+
+    };
+    void DifferentialKinematics::turnRightBackward(float speed, float radius){
+
+        float left =   (radius + 2* half_wheel_base ) * speed /wheel_radius;
+        float right = -(radius ) * speed /wheel_radius;
+
+        Serial.println("TURN RIGHT BACKWARD");
+        Serial.println("left: " + (String) left + " , right: " + (String) right);
+        setSpeed(left, right);
+
+    };
 
 
     void DifferentialKinematics::rotate(float speed) {
         move(speed, 0.0f);
     };
 
-    void DifferentialKinematics::stop() {
-        Serial.println("STOP");
-        this->setSpeed(0,0);
-        this->disable();
-    }
 
  
     float DifferentialKinematics::wheel_dist_to_rad (float dist){
         
         return dist / wheel_circumference * 2* PI;
     };
+
     float DifferentialKinematics::wheel_rad_to_dist (float rad)
     {
-        return rad / (2*PI) * wheel_circumference;
-         
+        return rad / (2*PI) * wheel_circumference;         
     };
 
-    Pose DifferentialKinematics::wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose){
-        Serial.println("DifferentialKinematics::wheelVelToNextPose");
-        R = half_wheel_base *(vL + vR)/(vR - vL);
-        Serial.println("R: " +  (String) R);
-        vRobotAng = (vR - vL)/wheel_base;
-        Serial.println("vRobotAng: " +  (String) vRobotAng);
-        ICC = Vector(lastPose.x - R * sin(lastPose.angle),  lastPose.y + R * cos (lastPose.angle) );
-        Serial.println("ICC: " +  (String) ICC.x + " , " + ICC.y);
+    float DifferentialKinematics::shaft_vel_to_wheel_vel_rad(float rad)
+    {
+        return rad * wheel_radius;
+    };
+
+    Pose DifferentialKinematics::wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose, String curDirName){
+        
+        //Serial.println("vL: " + (String) vL + " , vR: " + (String) vR);
+
+        vR = -vR; //the way motors are mounted
+
+        vL = vL * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
+        vR = vR * wheel_radius;
+
+        float aV = (vR-vL)/wheel_base;//angular velocity of robot
+        float R = half_wheel_base *(vR + vL)/(vR - vL); //R = distance from ICR to the center of the robot
+
+        //Serial.println ("R: " + (String) R + "mm");
+        //Serial.println ("angular velocity: " + (String) aV + "unit?");
+
+        float V = (vR + vL)/2.0 ; //instantaneous velocity V of the point midway between the robot's wheels
+
+        //Serial.println ("instantaneous velocity midway between wheels: " + (String) V + "unit?");
+
 
         deltaTseconds = deltaT / 1000.0f;
-        Serial.println("deltaTseconds: " +  (String) deltaTseconds);
+        //Serial.println("deltaTseconds: " +  (String) deltaTseconds);
 
-        pose.x = cos(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) -sin(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.x;
-        pose.y = sin(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) +cos(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.y;
-        pose.angle = 0*(lastPose.x -ICC.x) + 0*(lastPose.y -ICC.y) + 1* lastPose.angle + vRobotAng*deltaTseconds;
+        float theta = lastPose.angle;
+        float L = half_wheel_base;
 
-        Serial.println("pose.x : " +  (String) pose.x );
-        Serial.println("pose.y : " +  (String) pose.y );
-        Serial.println("pose.angle : " +  (String) pose.angle );
+        float deltaSR = vR*deltaTseconds;
+        float deltaSL = vL*deltaTseconds;
+
+        // float deltaTheta = (deltaSR-deltaSL)/(2*L);
+        // float deltaS = (deltaSR+deltaSL)/2.0;
+
+        // float deltaX = deltaS * cos(theta + deltaTheta/2.0);
+        // float deltaY = deltaS * sin(theta + deltaTheta/2.0);
+    
+
+        //R is distance to outside wheel
+        //WORKS
+        // pose.x = lastPose.x +  (deltaSR+deltaSL)/2.0 * cos(lastPose.angle + (deltaSR-deltaSL)/(4*half_wheel_base)) ;
+        // pose.y = lastPose.y +  (deltaSR+deltaSL)/2.0 * sin(lastPose.angle + (deltaSR-deltaSL)/(4*half_wheel_base)) ;
+        // pose.angle = lastPose.angle + (deltaSR-deltaSL)/(2*half_wheel_base);
+         
+        //Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
+       
+
+        //R is distance to robot center
+        pose.x = lastPose.x + (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;
+        pose.y = lastPose.y + (deltaSR+deltaSL)/2.0  * sin( lastPose.angle  ) ;
+        pose.angle = lastPose.angle + (deltaSR-deltaSL)/(2*half_wheel_base);
+
+        Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
+  
+ 
+
+
+        //float left =  (radius + half_wheel_base) * vRobotAng /wheel_radius;
+
+        // left * wheel_radius/  (radius + half_wheel_base) =   vRobotAng ;
+        // right *wheel_radius/ (radius - half_wheel_base) = vRobotAng ;
+
+        // vRobotAng =   ( left * wheel_radius/  (radius + half_wheel_base) - right *wheel_radius/ (radius + half_wheel_base) )/2
+
+        //vRobotAng =   ( (vL  - vR) *wheel_radius/ (radius + half_wheel_base) )/2
+        
+
+        // float right = -(radius - half_wheel_base) * speed /wheel_radius;
+
+        // Serial.println("left: " + (String) left + " , right: " + (String) right);
+
+        // vL = vL * wheel_radius; //at shaft --> at wheel
+        // vR = vR * wheel_radius;
+        //Serial.println("vL: " + (String) vL + ", vR: " + (String) vR);
+
+        
+        // deltaTseconds = deltaT / 1000.0f;
+        // //Serial.println("deltaTseconds: " +  (String) deltaTseconds);
+
+        
+
+    //     //Serial.println("curDirName: " + curDirName);
+
+    //     if(curDirName.equals("S")) //GOING STRAIGHT
+    //     {
+    //         float vRobot = (vR + vL)/2.0 ; //average the two, account for negative sign of motor right
+    //         //vRobot = wheel_rad_to_dist (vRobot); //convert from angular velocity to mm
+    //         pose.x += vRobot * cos(lastPose.angle)*deltaTseconds;
+    //         pose.y += vRobot * sin(lastPose.angle)*deltaTseconds;
+    //         pose.angle = lastPose.angle;
+    //     }
+    //     else
+    //     {
+        
+    //         //if (vR - vL !=0) R = half_wheel_base *(vL + vR)/(vR - vL);
+    //         //else 
+    //         // R = minRadius;
+    //         // vRobotAng = (vR - vL)/wheel_base;
+        
+    //         //R=minRadius;
+    //         //Serial.println("R: " +  (String) R);
+
+            
+    //     // Serial.println("vRobotAng: " +  (String) vRobotAng);
+    //         ICC = Vector(lastPose.x - R * sin(lastPose.angle),  lastPose.y + R * cos (lastPose.angle) );
+    //         //Serial.println("ICC: " +  (String) ICC.x + " , " + ICC.y);
+
+    //         pose.x = cos(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) -sin(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.x;
+    //         pose.y = sin(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) +cos(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.y;
+    //         pose.angle = 0*(lastPose.x -ICC.x) + 0*(lastPose.y -ICC.y) + 1* lastPose.angle + vRobotAng*deltaTseconds;
+    //         //pose.angle += globalCoordinateSystemOffsetAngle; //global coordinate systyem
+    //     }
+    //    // Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
+       
         return pose;
     };
 
@@ -99,7 +271,7 @@ namespace SmallRobots {
     };
 
     void DifferentialPathPlanner::calculate(Pose start, Pose end) {
-    
+        Serial.println ("minRadius: " + (String)minRadius);
         this->startPose = start;
         this->endPose = end;
 
@@ -410,183 +582,6 @@ namespace SmallRobots {
     };
 
 
-  //------------------------------------------------------------------------------------------------------------------
-    //  MotionController
-    //------------------------------------------------------------------------------------------------------------------
-
-    MotionController::MotionController(DifferentialKinematics& drive) : kinematics(drive) {
-    };
-
-    MotionController::~MotionController() {
-    };
-
-    void MotionController::addPoseToPath(Pose p)
-    {
-        path.push_back(p);
-
-    };
-    void MotionController::setPoseToReplacePath(Pose p)
-    {
-        path.clear();
-        path.push_back(p);
-
-    };
-
-
-    void MotionController::setTarget() //get next pose in path, calculate dubin path from current pose and target pose
-    {
-        Serial.println ("MotionController::setTarget()");
-        Serial.println("curPathIndex: " + (String) curPathIndex);
-        Serial.println("path queue length: " + (String) path.size());
-        targetPose = path[curPathIndex];
-        Serial.println("Target Pose: " + (String)targetPose.x + ", " + (String) targetPose.y + ", " + (String) targetPose.angle);
-        pathPlanner.calculate(curPose, targetPose);
-        Serial.println ("Update path, shortest path: " + pathPlanner.getShortestPathName());
-
-        Serial.println ("1.) -"+ pathPlanner.arcDirName1+ "- with angle: "+ degrees (pathPlanner.arcAngle1)+ "°, around center: "+ pathPlanner.arcCenter1.x +"," + pathPlanner.arcCenter1.y);
-        if (pathPlanner.arcDirName12.equals ("S")) Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ ", from start: "+ pathPlanner.lineStart.x + ", " +pathPlanner.lineStart.y+ " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
-        else Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x +"," + pathPlanner.arcCenter12.y);
-        Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x +"," + pathPlanner.arcCenter2.y);
-
-        ICC = pathPlanner.arcCenter1;
-        Serial.println ("ICC: " + (String) ICC.x +  " , " + (String) ICC.y);
-        curV = Vector (curPose.x, curPose.y);
-        Serial.println("curV: " +  (String) curV.x + " , " + (String) curV.y);
-
-        R = distance(curV, ICC);
-        Serial.println("R: " + (String) R);
-    };
-
-    void MotionController::setWheelVelocitiesSeg1() //ARC left or right with minRad
-    {
-        //Serial.println ("Set wheel velocities segment 1(3) of path.");
-        vRobotAng = default_speed_Ang;
-
-        curDirName = pathPlanner.arcDirName1;
-
-        if (pathPlanner.arcDirName1.equals ("L")) {
-          //vR = (R+kinematics.half_wheel_base)* vRobotAng; //SEND TO WHEELS as angular velocities
-          //vL = (R-kinematics.half_wheel_base)* vRobotAng;
-          kinematics.move(vRobotAng, -R); //negative when left turn = counterclockwise
-          targetAngle = pathPlanner.arcAngle1 + curPose.angle ;
-        } else if (pathPlanner.arcDirName1.equals ("R")){
-          //vR = (R-kinematics.half_wheel_base)* vRobotAng; //SEND TO WHEELS as angular velocities
-          //vL = (R+kinematics.half_wheel_base)* vRobotAng;
-          kinematics.move(vRobotAng, R); //positive when right turn = clockwise
-          targetAngle = -pathPlanner.arcAngle1 + curPose.angle ;
-        }
-
-        //Serial.println ("targetAngle: "+ String (degrees(targetAngle))+ " °");
-
-    };
-    void MotionController::setWheelVelocitiesSeg2() //STRAIGHT or left or right ARC
-    {
-
-        //Serial.println ("Set wheel velocities segment 2(3) of path.");
-
-        curDirName = pathPlanner.arcDirName12;
-
-        if (pathPlanner.arcDirName12.equals ("S")) {
-
-            //Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ "+ from start: "+ pathPlanner.lineStart.x + ", " +  pathPlanner.lineStart.y + " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
-            // GO Straight
-            vRobotAng = 0;
-            vRobot = default_speed;
-            kinematics.move(vRobot);
-          } else
-          { //R or L
-
-            //Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x + ", " + pathPlanner.arcCenter12.y);
-
-            //Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
-
-            ICC = pathPlanner.arcCenter12; //OR ? in theory the same: Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-            R = pathPlanner.minRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
-            
-            vRobotAng = default_speed_Ang;
-
-            if (pathPlanner.arcDirName12.equals ("L")) {
-                kinematics.move(vRobotAng, -R); //negative when left turn = counterclockwise
-                targetAngle = pathPlanner.arcAngle12 + curPose.angle ;
-            } else if (pathPlanner.arcDirName12.equals ("R")) {
-                kinematics.move(vRobotAng, R); //positive when right turn = clockwise
-                targetAngle = -pathPlanner.arcAngle12 + curPose.angle ;
-            }
-
-            R = kinematics.half_wheel_base *(vL+vR)/(vR - vL);
-            vRobotAng = (vR - vL)/kinematics.wheel_base;
-            ICC = Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-
-            //Serial.println ("targetAngle: "+ String (degrees(targetAngle))+ " °");
-          }
-
-    };
-    void MotionController::setWheelVelocitiesSeg3() //ARC left or right
-    {
-
-        //Serial.println ("Set wheel velocities segment 3(3) of path.");
-
-        //Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x + ", " + pathPlanner.arcCenter2.y);
-        //Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
-
-        ICC = pathPlanner.arcCenter2;//OR ? in theory the same: Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-        R = pathPlanner.minRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
-
-        vRobotAng = default_speed_Ang;
-
-        curDirName = pathPlanner.arcDirName2;
-
-        if (pathPlanner.arcDirName2.equals ("L")) {
-            kinematics.move(vRobotAng, -R); //negative when left turn = counterclockwise
-            targetAngle = pathPlanner.arcAngle2 + curPose.angle ;
-        } else if (pathPlanner.arcDirName2.equals ("R")){
-            kinematics.move(vRobotAng, R); //positive when right turn = clockwise
-            targetAngle = -pathPlanner.arcAngle2 + curPose.angle ;
-        }
-
-        //Serial.println ("targetAngle: " + String (degrees(targetAngle)) + " °");
-
-    };
-
-    void MotionController::stopMoving(){
-        kinematics.stop();
-    };
-
-    void MotionController::enableMotors(){
-        kinematics.enable();
-    };
-
-
-    void MotionController::setCurPose(Pose pose){
-        curPose = pose;
-    };
-
-
-    void MotionController::loopPath()
-    {
-        curPathIndex++;
-        if (curPathIndex >= path.size()) curPathIndex= 0; 
-
-    };
-
-    bool MotionController::checkIfArrived(){
-        bool arrived = false;
-        float dist = 1000000000;
-        if (curDirName.equals("S")){
-            Vector curV = Vector(curPose.x, curPose.y);
-            Vector tarV = Vector (targetPose.x, targetPose.y);
-            dist = distance( curV, tarV );
-        }
-        if (
-          (curDirName.equals ("R") && targetAngle - curPose.angle >= arriveAngleDistance )
-          ||
-          (curDirName.equals ("L")  && targetAngle -  curPose.angle <= -arriveAngleDistance) 
-          ||
-          (curDirName.equals ("S")  && dist <= arriveDistance) )
-          {
-            arrived = true;
-          }
-        return arrived;
-    };
+  
     
 }; // namespace SmallRobots

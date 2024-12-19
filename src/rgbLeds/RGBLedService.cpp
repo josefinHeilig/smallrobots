@@ -1,7 +1,5 @@
 #include "RGBLedService.h"
 #include "../behaviour/Behaviours.h"
-#include "../power/BatteryCheckService.h"
-
 
 
 
@@ -9,7 +7,7 @@
 
 namespace SmallRobots {
      
-    RGBLedService rgbService;
+   
     
 
     void RGBLedService::setup(){
@@ -27,16 +25,23 @@ namespace SmallRobots {
         redValue = r;
         greenValue = g;
         blueValue = b;
-        //finalCol = col;
-        //finalCol = CRGB(col.g, col.r,col.b);
+        finalCol = RGBColor(r,g,b);        
+    }
 
-        
+    void RGBLedService::setFinalCol (RGBColor col)
+    {
+        redValue = col.r;
+        greenValue = col.g;
+        blueValue = col.b;
+        finalCol = col;     
     }
 
     void RGBLedService::allShow()
     {
         analogSetAttenuation(ADC_0db);
-         neopixelWrite(BUILTIN_LED, redValue, greenValue, blueValue); 
+        //neopixelWrite(BUILTIN_LED, redValue, greenValue, blueValue); 
+        neopixelWrite(BUILTIN_LED, (uint8_t) finalCol.r, (uint8_t)finalCol.g, (uint8_t)finalCol.b); 
+
         // for (uint16_t indexPixel = 0; indexPixel < NB_OF_RGB_PIXELS; indexPixel++)
         // {
         // lightstrip[indexPixel] = finalCol; //CRGB ( finalCol.Green,finalCol.Blue, finalCol.Red);
@@ -57,12 +62,15 @@ namespace SmallRobots {
         // FastLED.show();
     }
 
-    // void RGBLedService::showBatteryStatus(){
-    //     // CRGB temp = convertVoltageToColor(battery_voltage, V_LOWOFF, V_FULLYCHARGED);
-    //     // setFinalCol(temp);
-       
-    // }
+    void RGBLedService::setBatteryStatus(){
+        RGBColor temp = convertVoltageToColor(batteryCheck.getVoltage(), batteryCheck.getMinVoltage(), batteryCheck.getMaxVoltage());
+        setFinalCol(temp);
+    }
 
+    RGBColor RGBLedService::getVoltageColor(){
+        RGBColor temp = convertVoltageToColor(batteryCheck.getVoltage(), batteryCheck.getMinVoltage(), batteryCheck.getMaxVoltage());
+        return temp;
+    }
 
     // void RGBLedService::pixelBlink(int indexPixel)
     // {
@@ -120,24 +128,24 @@ namespace SmallRobots {
     //     // FastLED.show();
     // }
 
-    // CRGB RGBLedService::convertVoltageToColor( float value, float min, float max)
-    // {
+    RGBColor RGBLedService::convertVoltageToColor( float value, float min, float max)
+    {
 
-    //         float val = (value - min) / (max - min) ; 
+            float val = (value - min) / (max - min) ; 
 
-    //         int r = int (2.0f * (1 - val) * 255);
-    //         int g = int( 2.0f * val * 255);
-    //         int b = 0;
-    //         int w = 0;
+            int r = int (2.0f * (1 - val) * 255);
+            int g = int( 2.0f * val * 255);
+            int b = 0;
+            int w = 0;
 
-    //         if (r > 255) r = 255;
-    //         else if (r < 0) r = 0;
-    //         if (g > 255) g = 255;
-    //         else if (g < 0) g = 0;
+            if (r > 255) r = 255;
+            else if (r < 0) r = 0;
+            if (g > 255) g = 255;
+            else if (g < 0) g = 0;
 
-    //     CRGB col = CRGB(r,g,b);
-    //     //Serial.println ( String (r) + ", "+ String(g) + ", " + String(b) + ", " + String(w));
-    //     return col;
-    // };
+        RGBColor col = RGBColor(r,g,b);
+        //Serial.println ( String (r) + ", "+ String(g) + ", " + String(b) + ", " + String(w));
+        return col;
+    };
 
 };

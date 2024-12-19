@@ -85,7 +85,7 @@ Vector unit (Vector &A)
 
  float distance (Vector& A, Vector& B)
  {
-    float dist = sqrt( (B.x - A.x)*(B.x - A.x) + (B.y - A.y)*(B.y - A.y)  +  (B.z - A.z)*(B.z - A.z) );
+    float dist = sqrt( ((B.x - A.x)*(B.x - A.x) + (B.y - A.y)*(B.y - A.y)));
     return dist;
  };
 

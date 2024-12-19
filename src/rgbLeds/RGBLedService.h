@@ -3,6 +3,8 @@
 #pragma once
 
 #include "../esp32/hw_config.h"
+#include "../config/globalStructs.h"
+#include "power/BatteryCheckMachine.h"
 //#include <FastLED.h>
 //#include "../esp32/wifi/WifiStateMachine.h"
 
@@ -21,7 +23,7 @@ namespace SmallRobots {
 
             uint8_t redValue = 0, greenValue = 0, blueValue = 0;
 
-            //CRGB finalCol = CRGB(0,0,0);
+            RGBColor finalCol = RGBColor(0,0,0);
 
             bool pixelOn_0, pixelOn_1, pixelOn_2 = false;
 
@@ -29,21 +31,21 @@ namespace SmallRobots {
 
         public:
 
-            RGBLedService(){};
-           // ~RGBLedService(){};
+            RGBLedService(BatteryCheckStateMachine& _batteryCheck ): batteryCheck(_batteryCheck){};
+            ~RGBLedService(){};
 
             void setup();
         
             void setFinalCol ( uint8_t r, uint8_t g,uint8_t b);
-            //void setFinalCol (CRGB col);
+            void setFinalCol (RGBColor col);
 
             void allShow();
             void allBlink();
             void allOff();
             //void pixelBlink(int indexPixel);
  
-            
-            //void showBatteryStatus();
+            RGBColor getVoltageColor();
+            void setBatteryStatus();
             //void showWifiStatus();
             //void showValuesFromWifi();
 
@@ -52,12 +54,12 @@ namespace SmallRobots {
             //void pixelShowBrightness(int indexPixel, float val=1.0);
             //void pixelOff(int indexPixel);
 
-           // CRGB convertVoltageToColor( float value, float min, float max);
+            RGBColor convertVoltageToColor( float value, float min, float max);
             
-
+            protected:
+            BatteryCheckStateMachine& batteryCheck; //to get battery voltage for rgb display between full=green and empty = red
         
     };
 
-    extern RGBLedService rgbService;
 
 };

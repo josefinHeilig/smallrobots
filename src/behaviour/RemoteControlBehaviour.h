@@ -35,6 +35,7 @@ namespace SmallRobots {
                         radius = RADIUS_STREIGHT;
                         this->ctrl.kinematics.move(speed);
                     }
+                    event_bus.emit("startOdometry");
                 });
                 osc_control.addCommand("rotate", [this](OSCMessage& msg) {
                     lastCommand = millis();
@@ -46,6 +47,7 @@ namespace SmallRobots {
                     speed = 0.0f;
                     radius = RADIUS_STREIGHT;
                     this->ctrl.kinematics.stop();
+                    event_bus.emit("pause");
                 });
 
                 osc_control.addCommand("enableMotors", [this](OSCMessage& msg) {
@@ -56,6 +58,11 @@ namespace SmallRobots {
                 osc_control.addCommand("disableMotors", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     this->ctrl.kinematics.disable();
+                });
+
+                osc_control.addCommand("resetOdometry", [this](OSCMessage& msg) {
+                    lastCommand = millis();
+                    this->ctrl.setCurPose(Pose(0,0,0));
                 });
 
                  osc_control.addCommand("set_rgb", [this](OSCMessage& msg) {
@@ -69,11 +76,15 @@ namespace SmallRobots {
        
                 osc_control.addCommand("addPoseToPath", [this](OSCMessage& msg) {
                     lastCommand = millis();
-                    x = msg.getFloat(0);
-                    y = msg.getFloat(1);
-                    angle = msg.getFloat(2);
-                    int state = msg.getInt(3);
-                    if (msg.size() > 4) speed = msg.getFloat(4);   
+                    int state = msg.getInt(0);
+                    x = msg.getFloat(1);
+                    y = msg.getFloat(2);
+                    angle = msg.getFloat(3);
+                    
+                    if (msg.size() > 4) {
+                        speed = msg.getFloat(4);
+                        ctrl.setRobotVelocity(speed);   
+                    }
                     Pose pose = {x,y,angle};
                     this->ctrl.addPoseToPath(pose);
                     if (state == 1) event_bus.emit("set_new_pose");  
@@ -84,11 +95,33 @@ namespace SmallRobots {
                     x = msg.getFloat(0);
                     y = msg.getFloat(1);
                     angle = msg.getFloat(2);
-                    if (msg.size() > 3) speed = msg.getFloat(3);   
+                    if (msg.size() > 3) {
+                        speed = msg.getFloat(4);
+                        ctrl.setRobotVelocity(speed);   
+                    }
                     Pose pose = {x,y,angle};
                     this->ctrl.setPoseToReplacePath(pose);
                     event_bus.emit("set_new_pose");  
                     
+                });
+
+                osc_control.addCommand("addPosesToPath", [this](OSCMessage& msg) {
+                    lastCommand = millis();
+                    std::vector<Pose> newPath;
+                    int nbOfPoses = msg.getInt(0);
+                    int state = msg.getInt(1);
+                    for (int i= 0; i<nbOfPoses; i+=3)
+                    {
+                        x = msg.getFloat(i+2);
+                        y = msg.getFloat(i+3);
+                        angle = msg.getFloat(i+4);
+                                        
+                        Pose pose = {x,y,angle};
+                        newPath.push_back(pose);
+
+                    }
+                        this->ctrl.addPoseListToPath(newPath);
+                    if (state == 1) event_bus.emit("set_new_pose");  
                 });
                 
             };
