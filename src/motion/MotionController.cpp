@@ -37,30 +37,27 @@ namespace SmallRobots {
 
     void MotionController::setTarget() //get next pose in path, calculate dubin path from current pose and target pose
     {
-        Serial.println ("MotionController::setTarget()");
-        Serial.println("curPathIndex: " + (String) curPathIndex);
-        Serial.println("path queue length: " + (String) path.size());
+        // Serial.println ("MotionController::setTarget()");
+        // Serial.println("curPathIndex: " + (String) curPathIndex);
+        // Serial.println("path queue length: " + (String) path.size());
         targetPose = path[curPathIndex];
-        //Vector temp = Vector(targetPose.x,targetPose.y);
-        // temp = rotation(temp, kinematics.globalCoordinateSystemOffsetAngle);
-        //targetPose = Pose(temp.x, temp.y, targetPose.angle + kinematics.globalCoordinateSystemOffsetAngle);
-        Serial.println("Current Pose: " + (String)curPose.x + ", " + (String) curPose.y + ", " + (String)degrees( curPose.angle));
-        Serial.println("Target Pose: " + (String)targetPose.x + ", " + (String) targetPose.y + ", " + (String) degrees(targetPose.angle));
+        // Serial.println("Current Pose: " + (String)curPose.x + ", " + (String) curPose.y + ", " + (String)degrees( curPose.angle));
+        // Serial.println("Target Pose: " + (String)targetPose.x + ", " + (String) targetPose.y + ", " + (String) degrees(targetPose.angle));
         pathPlanner.calculate(curPose, targetPose);
-        Serial.println ("Update path, shortest path: " + pathPlanner.getShortestPathName());
+        // Serial.println ("Update path, shortest path: " + pathPlanner.getShortestPathName());
 
-        Serial.println ("1.) -"+ pathPlanner.arcDirName1+ "- with angle: "+ degrees (pathPlanner.arcAngle1)+ "°, around center: "+ pathPlanner.arcCenter1.x +"," + pathPlanner.arcCenter1.y);
-        if (pathPlanner.arcDirName12.equals ("S")) Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ ", from start: "+ pathPlanner.lineStart.x + ", " +pathPlanner.lineStart.y+ " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
-        else Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x +"," + pathPlanner.arcCenter12.y);
-        Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x +"," + pathPlanner.arcCenter2.y);
+        // Serial.println ("1.) -"+ pathPlanner.arcDirName1+ "- with angle: "+ degrees (pathPlanner.arcAngle1)+ "°, around center: "+ pathPlanner.arcCenter1.x +"," + pathPlanner.arcCenter1.y);
+        // if (pathPlanner.arcDirName12.equals ("S")) Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ ", from start: "+ pathPlanner.lineStart.x + ", " +pathPlanner.lineStart.y+ " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
+        // else Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x +"," + pathPlanner.arcCenter12.y);
+        // Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x +"," + pathPlanner.arcCenter2.y);
 
         ICC = pathPlanner.arcCenter1;
         Serial.println ("ICC: " + (String) ICC.x +  " , " + (String) ICC.y);
         curV = Vector (curPose.x, curPose.y);
-        Serial.println("curV: " +  (String) curV.x + " , " + (String) curV.y);
+        // Serial.println("curV: " +  (String) curV.x + " , " + (String) curV.y);
 
         R = distance(curV, ICC);
-        Serial.println("R: " + (String) R);
+        // Serial.println("R: " + (String) R);
 
         //rest values for next straight move
         if (pathPlanner.arcDirName12.equals ("S")) {
@@ -95,7 +92,7 @@ namespace SmallRobots {
 
         if (pathPlanner.arcDirName12.equals ("S")) {
 
-            Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ "+ from start: "+ pathPlanner.lineStart.x + ", " +  pathPlanner.lineStart.y + " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
+            // Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ "+ from start: "+ pathPlanner.lineStart.x + ", " +  pathPlanner.lineStart.y + " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
             
             targetPose = Pose(pathPlanner.lineEnd.x, pathPlanner.lineEnd.y, curPose.angle);
             // GO Straight
@@ -105,13 +102,13 @@ namespace SmallRobots {
       
             curDistance= 0;
             lastDistance = pathPlanner.lineLength *2;
-            Serial.println("SET LAST DISTANCE to "+ (String) lastDistance);
+            // Serial.println("SET LAST DISTANCE to "+ (String) lastDistance);
     
 
           } else
           { //R or L
 
-            Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x + ", " + pathPlanner.arcCenter12.y);
+            // Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with angle: "+ degrees (pathPlanner.arcAngle12)+ "°, around center: "+ pathPlanner.arcCenter12.x + ", " + pathPlanner.arcCenter12.y);
 
             //Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
 
@@ -137,10 +134,10 @@ namespace SmallRobots {
     void MotionController::setWheelVelocitiesSeg3() //ARC left or right
     {
 
-        Serial.println ("Set wheel velocities segment 3(3) of path.");
+        // Serial.println ("Set wheel velocities segment 3(3) of path.");
 
-        Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x + ", " + pathPlanner.arcCenter2.y);
-        Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
+        // Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x + ", " + pathPlanner.arcCenter2.y);
+        // Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
 
         ICC = pathPlanner.arcCenter2;//OR ? in theory the same: Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
         R = pathPlanner.minRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
@@ -179,7 +176,7 @@ namespace SmallRobots {
 
     void MotionController::setCurPose(Pose pose){
         curPose = pose;
-        Serial.println ("curPose : " + (String) curPose.x+ ", " +(String) curPose.y+ ", " + (String) degrees(curPose.angle)) ;
+        //Serial.println ("curPose : " + (String) curPose.x+ ", " +(String) curPose.y+ ", " + (String) degrees(curPose.angle)) ;
 
     };
 
@@ -202,17 +199,18 @@ namespace SmallRobots {
             //Serial.println("curV:" + String(curV.x) + ", " + (String) curV.y);
             //Serial.println("tarV:" + String(tarV.x) + ", " + (String) tarV.y);
             curDistance = distance( curV, tarV );
-            Serial.println("distance: " + (String) curDistance + "< lastDistance: " + (String) lastDistance);
+            //Serial.println("distance: " + (String) curDistance + "< lastDistance: " + (String) lastDistance);
         } else
         {
-            Serial.println ("targetAngle - curPose.angle :"
-            + String (degrees(targetAngle))+ " ° - "
-            + String (degrees(curPose.angle ))+ " ° = "
-            + String ( degrees (targetAngle - curPose.angle)) + " °"
-            );
+            //Serial.println ("targetAngle - curPose.angle :"
+            // + String (degrees(targetAngle))+ " ° - "
+            // + String (degrees(curPose.angle ))+ " ° = "
+            // + String ( degrees (targetAngle - curPose.angle)) + " °"
+            // );
             
         }
         if (
+          //(curDirName.equals ("L") && targetAngle - curPose.angle  <= arriveAngleDistance )
           (curDirName.equals ("L") && targetAngle - curPose.angle  <= arriveAngleDistance )
           ||
           (curDirName.equals ("R")  && targetAngle -  curPose.angle >= arriveAngleDistance) 
@@ -222,7 +220,7 @@ namespace SmallRobots {
         )
         {
             arrived = true;
-            Serial.println("ARRIVED");
+            // Serial.println("ARRIVED");
            //reset distances when next pose path is calculated
         }
     

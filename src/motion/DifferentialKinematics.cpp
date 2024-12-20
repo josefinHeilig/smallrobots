@@ -32,7 +32,7 @@ namespace SmallRobots {
         }
         else if (radius == 0.0) {
             float wheelSpeed = speed / half_wheel_base;
-            setSpeed(-wheelSpeed, -wheelSpeed); //TO BE CHECKED
+            setSpeed(-wheelSpeed, -wheelSpeed); 
         }
         else {
 
@@ -65,7 +65,7 @@ namespace SmallRobots {
             //     right = -(radius ) * angularSpeed /wheel_radius;
             // }
           
-            Serial.println("left: " + (String) left + " , right: " + (String) right);
+            // Serial.println("left: " + (String) left + " , right: " + (String) right);
             setSpeed(left, right);
         }
     };
@@ -143,13 +143,13 @@ namespace SmallRobots {
         vL = vL * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
         vR = vR * wheel_radius;
 
-        float aV = (vR-vL)/wheel_base;//angular velocity of robot
-        float R = half_wheel_base *(vR + vL)/(vR - vL); //R = distance from ICR to the center of the robot
+        // float aV = (vR-vL)/wheel_base;//angular velocity of robot
+        // float R = half_wheel_base *(vR + vL)/(vR - vL); //R = distance from ICR to the center of the robot
 
         //Serial.println ("R: " + (String) R + "mm");
         //Serial.println ("angular velocity: " + (String) aV + "unit?");
 
-        float V = (vR + vL)/2.0 ; //instantaneous velocity V of the point midway between the robot's wheels
+        // float V = (vR + vL)/2.0 ; //instantaneous velocity V of the point midway between the robot's wheels
 
         //Serial.println ("instantaneous velocity midway between wheels: " + (String) V + "unit?");
 
@@ -157,8 +157,8 @@ namespace SmallRobots {
         deltaTseconds = deltaT / 1000.0f;
         //Serial.println("deltaTseconds: " +  (String) deltaTseconds);
 
-        float theta = lastPose.angle;
-        float L = half_wheel_base;
+        // float theta = lastPose.angle;
+        // float L = half_wheel_base;
 
         float deltaSR = vR*deltaTseconds;
         float deltaSL = vL*deltaTseconds;
@@ -186,66 +186,6 @@ namespace SmallRobots {
 
         Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
   
- 
-
-
-        //float left =  (radius + half_wheel_base) * vRobotAng /wheel_radius;
-
-        // left * wheel_radius/  (radius + half_wheel_base) =   vRobotAng ;
-        // right *wheel_radius/ (radius - half_wheel_base) = vRobotAng ;
-
-        // vRobotAng =   ( left * wheel_radius/  (radius + half_wheel_base) - right *wheel_radius/ (radius + half_wheel_base) )/2
-
-        //vRobotAng =   ( (vL  - vR) *wheel_radius/ (radius + half_wheel_base) )/2
-        
-
-        // float right = -(radius - half_wheel_base) * speed /wheel_radius;
-
-        // Serial.println("left: " + (String) left + " , right: " + (String) right);
-
-        // vL = vL * wheel_radius; //at shaft --> at wheel
-        // vR = vR * wheel_radius;
-        //Serial.println("vL: " + (String) vL + ", vR: " + (String) vR);
-
-        
-        // deltaTseconds = deltaT / 1000.0f;
-        // //Serial.println("deltaTseconds: " +  (String) deltaTseconds);
-
-        
-
-    //     //Serial.println("curDirName: " + curDirName);
-
-    //     if(curDirName.equals("S")) //GOING STRAIGHT
-    //     {
-    //         float vRobot = (vR + vL)/2.0 ; //average the two, account for negative sign of motor right
-    //         //vRobot = wheel_rad_to_dist (vRobot); //convert from angular velocity to mm
-    //         pose.x += vRobot * cos(lastPose.angle)*deltaTseconds;
-    //         pose.y += vRobot * sin(lastPose.angle)*deltaTseconds;
-    //         pose.angle = lastPose.angle;
-    //     }
-    //     else
-    //     {
-        
-    //         //if (vR - vL !=0) R = half_wheel_base *(vL + vR)/(vR - vL);
-    //         //else 
-    //         // R = minRadius;
-    //         // vRobotAng = (vR - vL)/wheel_base;
-        
-    //         //R=minRadius;
-    //         //Serial.println("R: " +  (String) R);
-
-            
-    //     // Serial.println("vRobotAng: " +  (String) vRobotAng);
-    //         ICC = Vector(lastPose.x - R * sin(lastPose.angle),  lastPose.y + R * cos (lastPose.angle) );
-    //         //Serial.println("ICC: " +  (String) ICC.x + " , " + ICC.y);
-
-    //         pose.x = cos(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) -sin(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.x;
-    //         pose.y = sin(vRobotAng*deltaTseconds)*(lastPose.x -ICC.x) +cos(vRobotAng*deltaTseconds)*(lastPose.y -ICC.y) + 0*lastPose.angle +ICC.y;
-    //         pose.angle = 0*(lastPose.x -ICC.x) + 0*(lastPose.y -ICC.y) + 1* lastPose.angle + vRobotAng*deltaTseconds;
-    //         //pose.angle += globalCoordinateSystemOffsetAngle; //global coordinate systyem
-    //     }
-    //    // Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
-       
         return pose;
     };
 
@@ -280,25 +220,41 @@ namespace SmallRobots {
 
         this->Sdir = rotation(unitX, startPose.angle);
         this->Edir = rotation(unitX, endPose.angle);    
+        // Serial.println ("S: " + (String) S.x + ", " + (String) S.y + ", " + (String) S.z +", angle:" + startPose.angle);
+        // Serial.println ("E: " + (String) E.x + ", " + (String) E.y + ", " + (String) E.z +", angle:" + endPose.angle);
+        // Serial.println ("Sdir: " + (String) Sdir.x + ", " + (String) Sdir.y + ", " + (String) Sdir.z );
+        // Serial.println ("Edir: " + (String) Edir.x + ", " + (String) Edir.y + ", " + (String) Edir.z );
 
         //RSL = Right, Straight, Left--------------------------------------------------------
         unitV = unit(Sdir);
         cross = crossProduct(unitV, unitZ);
         R1 = S + (cross * minRadius); //center of first circle to turn Right
+        // Serial.println ("unitV: " + (String) unitV.x + ", " + (String) unitV.y + ", " + (String) unitV.z );
+        // Serial.println ("cross: " + (String) cross.x + ", " + (String) cross.y + ", " + (String) cross.z );
+        // Serial.println ("R1: " + (String) R1.x + ", " + (String) R1.y + ", " + (String) R1.z );
 
         unitV = unit(Edir);
         cross = crossProduct( unitV, unitZ);
         L2 = E - (cross* minRadius);   //center of second circle to turn Left
+        // Serial.println ("unitV: " + (String) unitV.x + ", " + (String) unitV.y + ", " + (String) unitV.z );
+        // Serial.println ("cross: " + (String) cross.x + ", " + (String) cross.y + ", " + (String) cross.z );
+        // Serial.println ("L2: " + (String) L2.x + ", " + (String) L2.y + ", " + (String) L2.z );
 
         //middle point
         a = L2 -  R1;
         A = R1 + (a * 0.5); //only because both circles are the same
+        // Serial.println("Middle Point");
+        // Serial.println ("a: " + (String) a.x + ", " + (String) a.y + ", " + (String) a.z );
+        // Serial.println ("A: " + (String) A.x + ", " + (String) A.y + ", " + (String) A.z );
 
         //tangent point T1
         float temp = (2*minRadius)/ magnitude(a);
+        // Serial.println("tangent point T1");
+        // Serial.println ("temp: " + (String) temp);
         if (temp >=0 && temp <=1) //value region of acos
         {
             alpha = acos(temp);
+            // Serial.println ("alpha: " + (String) degrees(alpha));
 
             u = unit (a) * (minRadius * cos(alpha)) ;
             unitV = unit(a);
@@ -309,7 +265,10 @@ namespace SmallRobots {
         
             //tangent point T2
 
-            RSL = A - (T1 * 2);
+            RSL = (A - T1) * 2;
+
+            //Serial.println ("RSL: " + (String) RSL.x + ", " + (String) RSL.y + ", " + (String) RSL.z );
+
             T2 = T1 + RSL;
 
             allLength[0] = circularArcLengthCW (Sdir, S, T1, minRadius) + distance( T1,T2) +  circularArcLengthCCW (Edir, E, T2, minRadius);

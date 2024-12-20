@@ -8,7 +8,7 @@
 #include "MotionController.h"
 #include "Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 100 //ms
+#define ODOMETRY_UPDATE_RATE_TIMEOUT 10 //ms
 
 namespace SmallRobots {
 
@@ -93,7 +93,7 @@ namespace SmallRobots {
         void on_enter_idle()
         {
             if (first_on) {
-                Serial.println("Motion idle -  disable Motors");
+                // Serial.println("Motion idle -  disable Motors");
                 ctrl.stop();
                 first_on = false;
             }
@@ -102,41 +102,41 @@ namespace SmallRobots {
 
         void on_enter_new_target_pose() { 
             
-            Serial.println("ctrl.setTarget()");
+            // Serial.println("ctrl.setTarget()");
             ctrl.setTarget();                          
 
-            Serial.println("odometry.resetLastTime()");
+            // Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();     
 
-            Serial.println("ctrl.setWheelVelocitiesSeg1()");
+            // Serial.println("ctrl.setWheelVelocitiesSeg1()");
             ctrl.setWheelVelocitiesSeg1();              
 
-            Serial.println("machine.trigger(start_seg1)");
+            // Serial.println("machine.trigger(start_seg1)");
             machine.trigger("start_seg1");             
 
             //reset subPathIndex
-            Serial.println("reset subPathIndex to 0");
+            // Serial.println("reset subPathIndex to 0");
             subPathIndex = 0;
         };
 
         void on_enter_arrived_at_tangentA() { 
-            Serial.println("odometry.resetLastTime()");
+            // Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
-            Serial.println("ctrl.setWheelVelocitiesSeg2()");
+            // Serial.println("ctrl.setWheelVelocitiesSeg2()");
             ctrl.setWheelVelocitiesSeg2();
             machine.trigger("start_seg2");
         };
 
         void on_enter_arrived_at_tangentB() { 
-            Serial.println("odometry.resetLastTime()");
+            // Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
-            Serial.println("ctrl.setWheelVelocitiesSeg3()");
+            // Serial.println("ctrl.setWheelVelocitiesSeg3()");
             ctrl.setWheelVelocitiesSeg3();
             machine.trigger("start_seg3");
         };
 
         void on_start_odometry(){
-            Serial.println("odometry.resetLastTime()");
+            // Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();
         };
 
@@ -151,17 +151,7 @@ namespace SmallRobots {
             {
                 ctrl.stopMoving();
             }
-            //stop moving, give feedback that next pose in path can be executed
-            //if next pose in path -> go to new pose
-            // if (ctrl.loopPath())
-            // {
-            //     machine.trigger("set_new_pose");
-            // } else
-            // {
-            // //otherwise stop moving TODO
-            //     ctrl.stopMoving();
-            // }
-            //ctrl.stopMoving();
+           
 
         };
         
@@ -182,18 +172,18 @@ namespace SmallRobots {
             if (ctrl.checkIfArrived()){
                 Serial.println (subPathIndex);
                 if (subPathIndex == 0){
-                    Serial.println ("FINISHED SEG 1");
+                    // Serial.println ("FINISHED SEG 1");
                     machine.trigger("finished_seg1");
                     subPathIndex=1;
                 }
                 else if (subPathIndex == 1){
-                    Serial.println ("FINISHED SEG 2");
+                    // Serial.println ("FINISHED SEG 2");
                     machine.trigger("finished_seg2");
                     subPathIndex=2;
                     
                 }
                 else if (subPathIndex == 2) {
-                    Serial.println ("FINISHED SEG 3");
+                    // Serial.println ("FINISHED SEG 3");
                     machine.trigger("finished_seg3");
                     subPathIndex=0;
                     
