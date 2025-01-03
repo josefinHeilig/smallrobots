@@ -43,6 +43,8 @@ namespace SmallRobots {
         PAUSE,
         LOOP,
         END,
+        CONTINUE,
+        RESTART,
     };
 
     class Vector {

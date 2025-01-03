@@ -34,6 +34,27 @@ namespace SmallRobots {
         path = poses;
     };
 
+    void MotionController::deletePath()
+    {
+        path.clear();
+    };
+
+    void MotionController::setLoopPath(){
+        pathBehaviour = LOOP ; //PATHBEHAVIOURS
+    };
+    void MotionController::setPausePath(){
+        pathBehaviour = PAUSE ; //PATHBEHAVIOURS
+    };
+    void MotionController::setContinuePath(){
+        pathBehaviour =  CONTINUE; //PATHBEHAVIOURS
+    };
+    void MotionController::setEndPath(){
+        pathBehaviour = END ; //PATHBEHAVIOURS
+    };
+    void MotionController::setRestartPath(){
+        pathBehaviour = RESTART; //PATHBEHAVIOURS
+    };
+    
 
     void MotionController::setTarget() //get next pose in path, calculate dubin path from current pose and target pose
     {
@@ -113,8 +134,9 @@ namespace SmallRobots {
             //Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
 
             ICC = pathPlanner.arcCenter12; //OR ? in theory the same: Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-            R = pathPlanner.minRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
-            
+            R = pathPlanner.turnRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
+            // curV = Vector (curPose.x, curPose.y);
+            // R = distance(curV, ICC);
 
             if (pathPlanner.arcDirName12.equals ("L")) {
                 kinematics.move(vRobot, R); 
@@ -123,11 +145,6 @@ namespace SmallRobots {
                 kinematics.move(vRobot, -R); 
                 targetAngle = -pathPlanner.arcAngle12 + curPose.angle ;
             }
-
-            //R = kinematics.half_wheel_base *(vL+vR)/(vR - vL);
-            //ICC = Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-
-            //Serial.println ("targetAngle: "+ String (degrees(targetAngle))+ " °");
           }
 
     };
@@ -140,7 +157,9 @@ namespace SmallRobots {
         // Serial.println("current robot angle:  "+ String(degrees (curPose.angle))+ " °");
 
         ICC = pathPlanner.arcCenter2;//OR ? in theory the same: Vector(curPose.x - R * sin(curPose.angle), curPose.y + R* cos(curPose.angle) );
-        R = pathPlanner.minRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
+        R = pathPlanner.turnRadius;//OR ? in theory the same:  distance(Vector (curPose.x, curPose.y), ICC);
+        // curV = Vector (curPose.x, curPose.y);
+        // R = distance(curV, ICC);
 
 
         curDirName = pathPlanner.arcDirName2;
@@ -170,9 +189,18 @@ namespace SmallRobots {
     };
 
     void MotionController::setRobotVelocity( float _vRobot){ //in mm/s
-        vRobot = _vRobot;
+        //make sure that the sign of new velocity is the same as in current movement
+        float speed = kinematics.getCurRobotSpeed();
+        // if (speed >= 0)vRobot = abs( _vRobot );
+        // else vRobot = - abs(_vRobot);
+        vRobot =_vRobot;
+        float radius = kinematics.getCurRobotRadius();
+        kinematics.move(vRobot, radius);
     };
 
+    void MotionController::setPathRadius(float _radius){ //this is only for the next move command from dubin path
+        pathPlanner.setPathRadius(_radius);//in mm
+    }; 
 
     void MotionController::setCurPose(Pose pose){
         curPose = pose;

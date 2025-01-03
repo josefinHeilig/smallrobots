@@ -24,7 +24,8 @@ namespace SmallRobots {
         
         //speed in mm/s for straight
         //speed in mm/s for movement on arc
-
+        setCurRobotSpeed(speed);
+        setCurRobotRadius(radius);
      
         if (radius == RADIUS_STREIGHT) {
             float wheelSpeed = speed /wheel_circumference* 2*PI;
@@ -67,72 +68,28 @@ namespace SmallRobots {
           
             // Serial.println("left: " + (String) left + " , right: " + (String) right);
             setSpeed(left, right);
+
+    
         }
     };
-
-    void DifferentialKinematics::turnLeftForward(float speed, float radius){
-
-        float left =   (radius ) * speed /wheel_radius;
-        float right = -(radius + 2* half_wheel_base) * speed /wheel_radius;
-
-        Serial.println("TURN LEFT FORWARD");
-        Serial.println("left: " + (String) left + " , right: " + (String) right);
-        setSpeed(left, right);
-
+    void DifferentialKinematics::turnLeftForward(float speed, float radius){//cannot be used to go into another direction than specified,to guarantee the direction, values are turned absolute
+        move(abs(speed),abs(radius));
     };
     void DifferentialKinematics::turnRightForward(float speed, float radius){
-
-        float left =   (radius + 2* half_wheel_base ) * speed /wheel_radius;
-        float right = -(radius ) * speed /wheel_radius;
-
-        Serial.println("TURN RIGHT FORWARD");
-        Serial.println("left: " + (String) left + " , right: " + (String) right);
-        setSpeed(left, right);
-
+        move(abs(speed),-abs(radius));
     };
 
-        void DifferentialKinematics::turnLeftBackward(float speed, float radius){
-
-        float left =   (radius ) * speed /wheel_radius;
-        float right = -(radius + 2* half_wheel_base) * speed /wheel_radius;
-
-        Serial.println("TURN LEFT BACKWARD");
-        Serial.println("left: " + (String) left + " , right: " + (String) right);
-        setSpeed(left, right);
-
+    void DifferentialKinematics::turnLeftBackward(float speed, float radius){
+        move(-abs(speed),abs(radius));
     };
     void DifferentialKinematics::turnRightBackward(float speed, float radius){
-
-        float left =   (radius + 2* half_wheel_base ) * speed /wheel_radius;
-        float right = -(radius ) * speed /wheel_radius;
-
-        Serial.println("TURN RIGHT BACKWARD");
-        Serial.println("left: " + (String) left + " , right: " + (String) right);
-        setSpeed(left, right);
-
+        move(-abs(speed),-abs(radius));
     };
-
 
     void DifferentialKinematics::rotate(float speed) {
         move(speed, 0.0f);
     };
 
-
- 
-    float DifferentialKinematics::wheel_dist_to_rad (float dist){
-        
-        return dist / wheel_circumference * 2* PI;
-    };
-
-    float DifferentialKinematics::wheel_rad_to_dist (float rad)
-    {
-        return rad / (2*PI) * wheel_circumference;         
-    };
-
-    float DifferentialKinematics::shaft_vel_to_wheel_vel_rad(float rad)
-    {
-        return rad * wheel_radius;
-    };
 
     Pose DifferentialKinematics::wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose, String curDirName){
         
@@ -189,15 +146,19 @@ namespace SmallRobots {
         return pose;
     };
 
-    float DifferentialKinematics::poseToLeftWheelDist (Pose pose){
-        float left = 0;
-        return left;
+    void DifferentialKinematics::setCurRobotSpeed(float _curRobotSpeed){
+        curRobotSpeed = _curRobotSpeed;
     };
-    float DifferentialKinematics::poseToRightWheelDist (Pose pose){
-        float right = 0;
-        return right;
+    float DifferentialKinematics::getCurRobotSpeed(){
+        return curRobotSpeed;
     };
-  
+
+    void DifferentialKinematics::setCurRobotRadius(float _curRobotRadius){
+        curRobotRadius =_curRobotRadius;
+    };
+    float DifferentialKinematics::getCurRobotRadius(){
+        return curRobotRadius;
+    };
 
     //------------------------------------------------------------------------------------------------------------------
     //  DifferentialPathPlanner
@@ -211,7 +172,7 @@ namespace SmallRobots {
     };
 
     void DifferentialPathPlanner::calculate(Pose start, Pose end) {
-        Serial.println ("minRadius: " + (String)minRadius);
+        Serial.println ("turnRadius: " + (String)turnRadius);
         this->startPose = start;
         this->endPose = end;
 
@@ -228,14 +189,14 @@ namespace SmallRobots {
         //RSL = Right, Straight, Left--------------------------------------------------------
         unitV = unit(Sdir);
         cross = crossProduct(unitV, unitZ);
-        R1 = S + (cross * minRadius); //center of first circle to turn Right
+        R1 = S + (cross * turnRadius); //center of first circle to turn Right
         // Serial.println ("unitV: " + (String) unitV.x + ", " + (String) unitV.y + ", " + (String) unitV.z );
         // Serial.println ("cross: " + (String) cross.x + ", " + (String) cross.y + ", " + (String) cross.z );
         // Serial.println ("R1: " + (String) R1.x + ", " + (String) R1.y + ", " + (String) R1.z );
 
         unitV = unit(Edir);
         cross = crossProduct( unitV, unitZ);
-        L2 = E - (cross* minRadius);   //center of second circle to turn Left
+        L2 = E - (cross* turnRadius);   //center of second circle to turn Left
         // Serial.println ("unitV: " + (String) unitV.x + ", " + (String) unitV.y + ", " + (String) unitV.z );
         // Serial.println ("cross: " + (String) cross.x + ", " + (String) cross.y + ", " + (String) cross.z );
         // Serial.println ("L2: " + (String) L2.x + ", " + (String) L2.y + ", " + (String) L2.z );
@@ -248,7 +209,7 @@ namespace SmallRobots {
         // Serial.println ("A: " + (String) A.x + ", " + (String) A.y + ", " + (String) A.z );
 
         //tangent point T1
-        float temp = (2*minRadius)/ magnitude(a);
+        float temp = (2*turnRadius)/ magnitude(a);
         // Serial.println("tangent point T1");
         // Serial.println ("temp: " + (String) temp);
         if (temp >=0 && temp <=1) //value region of acos
@@ -256,10 +217,10 @@ namespace SmallRobots {
             alpha = acos(temp);
             // Serial.println ("alpha: " + (String) degrees(alpha));
 
-            u = unit (a) * (minRadius * cos(alpha)) ;
+            u = unit (a) * (turnRadius * cos(alpha)) ;
             unitV = unit(a);
             cross = crossProduct(unitZ, unitV);
-            v = cross * (minRadius*sin(alpha));
+            v = cross * (turnRadius*sin(alpha));
 
             T1= R1 + u + v;
         
@@ -271,7 +232,7 @@ namespace SmallRobots {
 
             T2 = T1 + RSL;
 
-            allLength[0] = circularArcLengthCW (Sdir, S, T1, minRadius) + distance( T1,T2) +  circularArcLengthCCW (Edir, E, T2, minRadius);
+            allLength[0] = circularArcLengthCW (Sdir, S, T1, turnRadius) + distance( T1,T2) +  circularArcLengthCCW (Edir, E, T2, turnRadius);
             if (isnan(allLength[0])) allLength[0] = -1;  // should not happen
         } else
         {
@@ -282,7 +243,7 @@ namespace SmallRobots {
         //RSR = Right, Straight, Right------------------------------------------------------------------
         unitV = unit(Edir);
         cross = crossProduct(unitV, unitZ);
-        R2 = E + ( cross*minRadius);
+        R2 = E + ( cross*turnRadius);
 
         //parallel line
         b = R2- R1;
@@ -290,17 +251,17 @@ namespace SmallRobots {
         //tangent point T3
         unitV = unit(b);
         cross = crossProduct(unitZ, unitV);
-        T3 = R1 + (cross *minRadius);
+        T3 = R1 + (cross *turnRadius);
 
         //tangent point T4
         T4 = T3 + b;
 
-        allLength[1] = circularArcLengthCW (Sdir, S, T3, minRadius) + distance(T3,T4) +  circularArcLengthCCW (Edir, E, T4, minRadius);
+        allLength[1] = circularArcLengthCW (Sdir, S, T3, turnRadius) + distance(T3,T4) +  circularArcLengthCCW (Edir, E, T4, turnRadius);
        if (isnan(allLength[1]))  allLength[1] = -1; //should not happen as RSR and LSL is always possible
         Serial.println (allNames[1]+ ": "+ allLength[1]);
 
         //RLR = Right, Left, Right ----------------------------------------------------------------------
-        float v1 = 4.0*minRadius*minRadius;
+        float v1 = 4.0*turnRadius*turnRadius;
         float v2 = magnitude(b)*magnitude(b)/4.0;
         if (v1 >=v2 ) //otherwise the circles do not touch and sqrt of negative value
         {
@@ -316,7 +277,7 @@ namespace SmallRobots {
             unitV = unit(sub);
             cross = crossProduct( unitV, unitZ);
             T5dir = unit ( cross );
-            allLength[2] = circularArcLengthCW (Sdir, S, T5, minRadius) +  circularArcLengthCW (T5dir, T5, T6, minRadius)  +  circularArcLengthCCW (Edir, E, T6, minRadius);
+            allLength[2] = circularArcLengthCW (Sdir, S, T5, turnRadius) +  circularArcLengthCW (T5dir, T5, T6, turnRadius)  +  circularArcLengthCCW (Edir, E, T6, turnRadius);
 
             if (isnan(allLength[2])) allLength[2] = -1; //should not happen with the check
         }
@@ -333,7 +294,7 @@ namespace SmallRobots {
 
         unitV = unit(Sdir);
         cross = crossProduct(unitV, unitZ);
-        L1 = S - ( cross * minRadius );
+        L1 = S - ( cross * turnRadius );
 
 
         //middle point
@@ -342,15 +303,15 @@ namespace SmallRobots {
 
 
         //tangent point T7
-        temp = (2*minRadius)/ magnitude(c);
+        temp = (2*turnRadius)/ magnitude(c);
         if (temp >=0 && temp <=1) //value region of acos
         {
             alpha = acos(temp);
 
-            u = unit (c) * ( minRadius * cos(alpha)) ;
+            u = unit (c) * ( turnRadius * cos(alpha)) ;
             unitV = unit(c);
             cross = crossProduct(unitV, unitZ);
-            v = cross * (minRadius*sin(alpha));
+            v = cross * (turnRadius*sin(alpha));
 
             T7= L1 + u + v;
 
@@ -358,7 +319,7 @@ namespace SmallRobots {
             LSR = (C - T7) * 2;
             T8 = T7 + LSR;
 
-            allLength[3] = circularArcLengthCW (Sdir, S, T7, minRadius) + distance (T7,T8) +  circularArcLengthCCW (Edir, E, T8, minRadius);
+            allLength[3] = circularArcLengthCW (Sdir, S, T7, turnRadius) + distance (T7,T8) +  circularArcLengthCCW (Edir, E, T8, turnRadius);
             if (isnan(allLength[3])) allLength[3] = -1; //should not happen anymore
         } else
         {
@@ -374,17 +335,17 @@ namespace SmallRobots {
         ////tangent point T9
         unitV = unit(d);
         cross = crossProduct(unitZ, unitV);
-        T9 = L1 - (cross * minRadius);
+        T9 = L1 - (cross * turnRadius);
 
         ////tangent point T10
         T10 = T9 +d;
 
-        allLength[4] = circularArcLengthCW (Sdir, S, T9, minRadius) + distance (T9,T10) +  circularArcLengthCCW (Edir, E, T10, minRadius);
+        allLength[4] = circularArcLengthCW (Sdir, S, T9, turnRadius) + distance (T9,T10) +  circularArcLengthCCW (Edir, E, T10, turnRadius);
         if (isnan(allLength[4])) allLength[4] = -1; //should not happen as RSR and LSL is always possible
         Serial.println (allNames[4]+ ": "+ allLength[4]);
 
         //LRL = Left, Right, Left ----------------------------------------------------------------------
-        v1 = 4.0*minRadius*minRadius;
+        v1 = 4.0*turnRadius*turnRadius;
         v2 =  magnitude(d)*magnitude(d)/4.0;
         if (v1 >=v2 ) //otherwise the circles do not touch and sqrt of negative value
         {
@@ -404,7 +365,7 @@ namespace SmallRobots {
             cross = crossProduct( unitV, unitZ);
             T11dir = unit (cross );
 
-            allLength[5] = circularArcLengthCW (Sdir, S, T11, minRadius) + circularArcLengthCCW (T11dir, T11, T12, minRadius) +  circularArcLengthCCW (Edir, E, T12, minRadius);
+            allLength[5] = circularArcLengthCW (Sdir, S, T11, turnRadius) + circularArcLengthCCW (T11dir, T11, T12, turnRadius) +  circularArcLengthCCW (Edir, E, T12, turnRadius);
             if (isnan(allLength[5]) ) allLength[5] = -1;
         } else {
             allLength[5] = -1;
@@ -412,6 +373,7 @@ namespace SmallRobots {
         Serial.println (allNames[5]+ ": "+ allLength[5]);
 
         getShortestPathIndex ();
+        setPathParametersOfIndex();
     };
 
     int DifferentialPathPlanner::getShortestPathIndex ()
@@ -433,112 +395,78 @@ namespace SmallRobots {
         
         this->name = &allNames[shortestPathIndex];
 
-        Serial.println ("Shortest path is: "+ allNames[shortestPathIndex]+ "  with distance: "+ allLength[shortestPathIndex]+ "   at minRadius: "+ minRadius);
+        Serial.println ("Shortest path is: "+ allNames[shortestPathIndex]+ "  with distance: "+ allLength[shortestPathIndex]+ "   at turnRadius: "+ turnRadius);
+        return shortestPathIndex;
+    };
 
-
+    bool DifferentialPathPlanner::setPathParametersOfIndex(int index)//default: shortestPathIndex, returns true if path exits
+    {
+        if (index ==-1)index = shortestPathIndex;
+        bool pathExists = true;
+        if(allLength[index]== -1)pathExists = false;
 
         //RSL = Right, Straight, Left--------------------------------------------------------
-        if ( allNames[shortestPathIndex].equals("RSL"))
+        if ( allNames[index].equals("RSL"))
         {
-            //set values for shortest path
-            // Serial.println("set values for RSL");
-            this->arcCenter1 = R1; 
-            // Serial.println("arcCenter1: " + (String) arcCenter1.x + " , "+ (String) arcCenter1.y);
-            this->arcRadius1 = minRadius; 
-            // Serial.println("arcRadius1: " + (String) arcRadius1);
-            this->arcAngle1 = circularArcAngleCW (Sdir, S, T1); this->arcDirName1 ="R";
-            // Serial.println("arcAngle1: " + (String) arcAngle1);
-
-            this->arcCenter2 = L2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T2); this->arcDirName2 ="L";
-
-            // Serial.println("arcCenter2: " + (String) arcCenter2.x + " , "+  (String) arcCenter2.y);
-            // Serial.println("arcRadius2: " + (String) arcRadius2);
-            // Serial.println("arcAngle2: " + (String) arcAngle2);
-
+            this->arcCenter1 = R1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T1); this->arcDirName1 ="R";
+            this->arcCenter2 = L2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T2); this->arcDirName2 ="L";
             this->arcCenter12 = Vector(); this->arcRadius12 = 0; this->arcAngle12 = 0; this->arcDirName12 ="S";
-            // Serial.println("arcCenter12: " + (String) arcCenter12.x + " , "+  (String) arcCenter12.y);
-            // Serial.println("arcRadius12: " + (String) arcRadius12);
-            // Serial.println("arcAngle12: " + (String) arcAngle12);
-
-            this->lineStart = T1; this->lineEnd = T2; this->lineLength = distance(lineStart, lineEnd);
-            // Serial.println("lineStart: " + (String) lineStart.x +  " , "+ (String) lineStart.y);
-            // Serial.println("lineEnd: " + (String) lineEnd.x +  " , "+ (String) lineEnd.y);
-            // Serial.println("lineLength: " + (String) lineLength);
-            
+            this->lineStart = T1; this->lineEnd = T2; this->lineLength = distance(lineStart, lineEnd);           
         }
-        
         //RSR = Right, Straight, Right------------------------------------------------------------------
-        if ( allNames[shortestPathIndex].equals("RSR"))
+        if ( allNames[index].equals("RSR"))
         {
-            //set values for shortest path
-            this->arcCenter1 = R1; this->arcRadius1 = minRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T3); this->arcDirName1 ="R";
-
-            this->arcCenter2 = R2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T4); this->arcDirName2 ="R";
-
+            this->arcCenter1 = R1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T3); this->arcDirName1 ="R";
+            this->arcCenter2 = R2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T4); this->arcDirName2 ="R";
             this->arcCenter12 = Vector(); this->arcRadius12 = 0; this->arcAngle12 = 0; this->arcDirName12 ="S";
-
             this->lineStart = T3; this->lineEnd = T4;this->lineLength = distance(lineStart, lineEnd);
         }
         //RLR = Right, Left, Right ----------------------------------------------------------------------
-        if ( allNames[shortestPathIndex].equals("RLR"))
+        if ( allNames[index].equals("RLR"))
         {
-            //set values for shortest path
-            this->arcCenter1 = R1; this->arcRadius1 = minRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T5);  this->arcDirName1 ="R";
-
-            this->arcCenter2 = R2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T6); this->arcDirName2 ="R";
-
-            this->arcCenter12 = L3; this->arcRadius12 = minRadius; this->arcAngle12 =  circularArcAngleCW (T5dir, T5, T6); this->arcDirName12 ="L";
-
+            this->arcCenter1 = R1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T5);  this->arcDirName1 ="R";
+            this->arcCenter2 = R2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T6); this->arcDirName2 ="R";
+            this->arcCenter12 = L3; this->arcRadius12 = turnRadius; this->arcAngle12 =  circularArcAngleCW (T5dir, T5, T6); this->arcDirName12 ="L";
             this->lineStart = Vector(); this->lineEnd = Vector();this->lineLength = 0;
         }
         //--------------------------------------------------------------------------------------------------------------------------------------
         // MIRROWED
         //--------------------------------------------------------------------------------------------------------------------------------------
-
         //LSR = Left, Straight, Right --------------------------------------------------------
-        if ( allNames[shortestPathIndex].equals("LSR"))
+        if ( allNames[index].equals("LSR"))
         {
-            //set values for shortest path
-            this->arcCenter1 = L1; this->arcRadius1 = minRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T7); this->arcDirName1 ="L";
-
-            this->arcCenter2 = R2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T8); this->arcDirName2 ="R";
-
+            this->arcCenter1 = L1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T7); this->arcDirName1 ="L";
+            this->arcCenter2 = R2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T8); this->arcDirName2 ="R";
             this->arcCenter12 = Vector(); this->arcRadius12 = 0; this->arcAngle12 = 0; this->arcDirName12 ="S";
-
             this->lineStart = T7; this->lineEnd = T8;this->lineLength = distance(lineStart, lineEnd);
         }
         //LSL = Left, Straight, Left ------------------------------------------------------------------
-    if ( allNames[shortestPathIndex].equals("LSL"))
+    if ( allNames[index].equals("LSL"))
         {
-            //set values for shortest path
-            this->arcCenter1 = L1; this->arcRadius1 = minRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T9); this->arcDirName1 ="L";
-
-            this->arcCenter2 = L2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T10); this->arcDirName2 ="L";
-
+            this->arcCenter1 = L1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T9); this->arcDirName1 ="L";
+            this->arcCenter2 = L2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T10); this->arcDirName2 ="L";
             this->arcCenter12 = Vector(); this->arcRadius12 = 0; this->arcAngle12 = 0; this->arcDirName12 ="S";
-
             this->lineStart = T9; this->lineEnd = T10;this->lineLength = distance(lineStart, lineEnd);
         }
         //LRL = Left, Right, Left ----------------------------------------------------------------------
-        if ( allNames[shortestPathIndex].equals("LRL"))
+        if ( allNames[index].equals("LRL"))
         {
-            //set values for shortest path
-            this->arcCenter1 = L1; this->arcRadius1 = minRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T11);this->arcDirName1 ="L";
-
-            this->arcCenter2 = L2; this->arcRadius2 = minRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T12);this->arcDirName2 ="L";
-
-            this->arcCenter12 = R3; this->arcRadius12 = minRadius; this->arcAngle12 =  circularArcAngleCW (T11dir, T11, T12); this->arcDirName12 ="R";
-
+            this->arcCenter1 = L1; this->arcRadius1 = turnRadius; this->arcAngle1 = circularArcAngleCW (Sdir, S, T11);this->arcDirName1 ="L";
+            this->arcCenter2 = L2; this->arcRadius2 = turnRadius; this->arcAngle2 = circularArcAngleCCW (Edir, E, T12);this->arcDirName2 ="L";
+            this->arcCenter12 = R3; this->arcRadius12 = turnRadius; this->arcAngle12 =  circularArcAngleCW (T11dir, T11, T12); this->arcDirName12 ="R";
             this->lineStart = Vector(); this->lineEnd = Vector();this->lineLength = 0;
         }
-
-        return shortestPathIndex;
+        return pathExists;
     };
 
     String DifferentialPathPlanner::getShortestPathName()
     {
         return allNames[shortestPathIndex];
     };
+
+    void DifferentialPathPlanner::setPathRadius(float _radius){
+        turnRadius = _radius;//in mm
+    }; 
 
 
   

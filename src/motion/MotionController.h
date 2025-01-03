@@ -7,6 +7,7 @@
 #include "DifferentialKinematics.h"
 
 #define DEFAULT_ROBOT_SPEED 100 //mm/s
+#define DEFAULT_PATH_RADIUS 50 //mm
 
 namespace SmallRobots {
 
@@ -65,6 +66,7 @@ namespace SmallRobots {
             void setPausePath();
             void setContinuePath();
             void setEndPath();
+            void setRestartPath();
 
 
             void setTarget(); //get next pose in path, calculate dubin path from current pose and target pose
@@ -77,6 +79,7 @@ namespace SmallRobots {
             void enableMotors();
 
             void setRobotVelocity(float _vRobot = DEFAULT_ROBOT_SPEED); //in mm/s
+            void setPathRadius(float _radius = DEFAULT_PATH_RADIUS); //in mm , absolute value
             void setCurPose(Pose pose);
 
             bool loopPath(); //returns true if there is more than one pose in the path

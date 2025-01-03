@@ -39,15 +39,7 @@ namespace SmallRobots {
             virtual void enable() = 0;
             virtual void disable() = 0;
 
-
-            float wheel_dist_to_rad (float dist);
-            float wheel_rad_to_dist (float rad);
-
-            float shaft_vel_to_wheel_vel_rad(float rad);
-
             Pose wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose,String curDirName);
-            float poseToLeftWheelDist (Pose pose);
-            float poseToRightWheelDist (Pose pose);
 
             virtual MotorsPosition getMotorsPosition()=0;
             virtual MotorsVelocity getMotorsVelocity()=0;
@@ -58,20 +50,18 @@ namespace SmallRobots {
             float wheel_circumference;
             float default_speed;
 
-            float minRadius = MINRADIUS; //TODO remove duplicate variable in PathPlanner
+            void setCurRobotSpeed(float _curRobotSpeed);
+            float getCurRobotSpeed();
 
-            float globalCoordinateSystemOffsetAngle = PI/2.0;
+            void setCurRobotRadius(float _curRobotRadius);
+            float getCurRobotRadius();
+
 
         private:
             Pose pose;
-            float R;
-            float vRobotAng;
-            Vector ICC;
             float deltaTseconds;
+            float curRobotSpeed, curRobotRadius; //updated by move, so in case speed gets updated, the move function can be called with the last set values
 
-            //ODOMETRY MOTOR
-            Pose curPose = Pose(0,0,0);            
-            int lastTime=0, deltaT=0; //delat T, read in millis,later converted to seconds to get m/s as unit ???
     };
 
 
@@ -132,22 +122,25 @@ namespace SmallRobots {
             void calculate(Pose start, Pose end) ;
 
             int getShortestPathIndex ();
+            bool setPathParametersOfIndex(int index = -1); //default: shortestPathIndex, returns true if path exits
             String getShortestPathName();
 
-            float minRadius = MINRADIUS; //radius of dubin path, variable
+            void setPathRadius(float _radius= MINRADIUS);
+
+            float turnRadius = MINRADIUS; //radius of dubin path, variable
 
             Vector arcCenter1;
-            float arcRadius1 = minRadius;
+            float arcRadius1 = turnRadius;
             float arcAngle1 = 0;
             String arcDirName1 = "DUBIN1";
 
             Vector arcCenter2;
-            float arcRadius2 = minRadius;
+            float arcRadius2 = turnRadius;
             float arcAngle2 = 0;
             String arcDirName2 = "DUBIN3";
 
             Vector arcCenter12;
-            float arcRadius12 = minRadius;
+            float arcRadius12 = turnRadius;
             float arcAngle12 = 0;
             String arcDirName12 = "DUBIN2";
 

@@ -63,6 +63,7 @@ namespace SmallRobots {
                 osc_control.addCommand("resetOdometry", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     this->ctrl.setCurPose(Pose(0,0,0));
+                    this->ctrl.deletePath();
                 });
 
                  osc_control.addCommand("set_rgb", [this](OSCMessage& msg) {
@@ -72,6 +73,18 @@ namespace SmallRobots {
                     externalG =  u_int8_t (msg.getInt(1));
                     externalB =  u_int8_t (msg.getInt(2));
               
+                });
+
+                osc_control.addCommand("setSpeed", [this](OSCMessage& msg) {
+                    lastCommand = millis();
+                    speed = msg.getFloat(0);
+                    ctrl.setRobotVelocity(speed);   
+                });
+
+                osc_control.addCommand("setPathRadius", [this](OSCMessage& msg) {
+                    lastCommand = millis();
+                    float R = msg.getFloat(0);
+                    ctrl.setPathRadius(R);   
                 });
        
                 osc_control.addCommand("addPoseToPath", [this](OSCMessage& msg) {
@@ -105,7 +118,7 @@ namespace SmallRobots {
                     
                 });
 
-                osc_control.addCommand("addPosesToPath", [this](OSCMessage& msg) {
+                osc_control.addCommand("addPoseListToPath", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     std::vector<Pose> newPath;
                     int nbOfPoses = msg.getInt(0);
