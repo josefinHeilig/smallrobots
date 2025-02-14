@@ -186,16 +186,19 @@ AsyncUDP udp; //global to send OSC Messages
                     break;
                 case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
                     machine.trigger("ev_disconnected");
+                    event_bus.emit("wifi_disconnected");
                     break;
                 case ARDUINO_EVENT_WIFI_STA_GOT_IP:
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("IP address: ");
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.localIP());
                     machine.trigger("ev_connected");
+                    event_bus.emit("wifi_connected");
                     break;
                 case ARDUINO_EVENT_WIFI_STA_LOST_IP:
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFi lost IP address.");
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.localIP());
                     machine.trigger("ev_disconnected");
+                    event_bus.emit("wifi_disconnected");
                     break;                
                 default:
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Unexpected WiFi event: ");

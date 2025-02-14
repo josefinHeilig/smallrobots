@@ -87,11 +87,15 @@ namespace SmallRobots {
                     break;
 
                     case WIFI_STATUS_CONNECTED:
-                    printf("WIFI_STATUS_CONNECTED");
+                    // printf("WIFI_STATUS_CONNECTED");
+                    rgbService.setFinalCol(100,100,100);
+                    rgbService.allShow();
                     break;
 
                     case WIFI_STATUS_FAILED:
-                    printf("WIFI_STATUS_FAILED");
+                    //printf("WIFI_STATUS_FAILED");
+                    rgbService.setFinalCol(100,100,100);
+                    rgbService.allBlink();
                     break;
 
                     case BATTERY_STATUS:
