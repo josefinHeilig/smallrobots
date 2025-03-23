@@ -68,20 +68,22 @@ class DifferentialPathPlanner {
         int getShortestPathIndex ();
         String getShortestPathName();
 
-        float minRadius = MINRADIUS; //radius of dubin path, variable
+        void setPathRadius(float r);
+
+        float turnRadius = MINRADIUS; //radius of dubin path, variable
 
         Vector arcCenter1;
-        float arcRadius1 = minRadius;
+        float arcRadius1 = turnRadius;
         float arcAngle1 = 0;
         String arcDirName1 = "DUBIN1";
 
         Vector arcCenter2;
-        float arcRadius2 = minRadius;
+        float arcRadius2 = turnRadius;
         float arcAngle2 = 0;
         String arcDirName2 = "DUBIN3";
 
         Vector arcCenter12;
-        float arcRadius12 = minRadius;
+        float arcRadius12 = turnRadius;
         float arcAngle12 = 0;
         String arcDirName12 = "DUBIN2";
 
