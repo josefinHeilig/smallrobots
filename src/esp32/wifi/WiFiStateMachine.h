@@ -82,11 +82,7 @@ AsyncUDP udp; //global to send OSC Messages
                 first_connection = false;
             }
             startNetwork();
-            // initialize startup behaviour
-            // String bname = robot_config["startupBehaviour"];
-            // Behaviour* b = engine.find(bname); // TODO simplify, just start it by name
-            // if (b!=nullptr)
-            //     engine.add(b);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: Network up");
             event_bus.emit("wifi_connected");
         };
 
@@ -123,6 +119,7 @@ AsyncUDP udp; //global to send OSC Messages
 
         void tick() {
             machine.tick();
+            if (ota && machine==connected) ArduinoOTA.handle();
         };
 
 
@@ -194,7 +191,6 @@ AsyncUDP udp; //global to send OSC Messages
                     break;
                 case ARDUINO_EVENT_WIFI_STA_LOST_IP:
                     if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFi lost IP address.");
-                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.localIP());
                     machine.trigger("ev_disconnected");
                     break;                
                 default:
