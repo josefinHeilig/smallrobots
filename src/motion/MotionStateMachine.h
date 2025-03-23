@@ -1,7 +1,7 @@
 #pragma once
 #include "Arduino.h"
 #include "../config/SmallRobotConfig.h"
-#include "../control/SmallRobotControl.h"
+
 #include "control/SmallRobotEventBus.h"
 
 #include "StateMachine.h"

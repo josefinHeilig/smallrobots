@@ -1,24 +1,63 @@
-
-
-#include "./DifferentialKinematics.h"
-
-
+#include "DifferentialKinematics.h"
 
 namespace SmallRobots {
+
+
 
     DifferentialKinematics::DifferentialKinematics(float _wheel_base, float wheel_diameter) {
         default_speed = 0.5;
         half_wheel_base = _wheel_base/2.0f;
         wheel_base = _wheel_base;
         wheel_radius = wheel_diameter/2.0f;
-        wheel_circumference = 2*wheel_radius * PI;
+        wheel_circumference = 2*wheel_radius * M_PI;
     };
 
     DifferentialKinematics::~DifferentialKinematics() {
     };
 
 
+    void DifferentialKinematics::setSpeed(float left, float right){
+        motorL.target =left;
+        motorR.target =right;
+        
+    };
+    void DifferentialKinematics::stop(){
+        this->setSpeed(0,0);
+        this->disable();
+    };
+    void DifferentialKinematics::enable(){
+        motorL.enable();
+        motorR.enable();
+    };
+    void DifferentialKinematics::disable(){
+        motorL.disable();
+        motorR.disable();
+    };
 
+    MotorsPosition DifferentialKinematics::getMotorsPosition(){
+
+        MotorsPosition pos;
+        // float pL = motorL.sensor->getFullRotations();
+        // float aL = motorL.sensor->getMechanicalAngle();
+        // float pR = motorR.sensor->getFullRotations();
+        // float aR = motorR.sensor->getMechanicalAngle();
+        // left = aL + _2PI * pL;
+        // right = aR + _2PI * pR;
+
+        pos.left_turns = (uint32_t)motorL.sensor->getFullRotations() * motorL.sensor_direction;
+        pos.left =  motorL.sensor->getMechanicalAngle() * motorL.sensor_direction;
+
+        pos.right_turns = (uint32_t)motorR.sensor->getFullRotations() * motorR.sensor_direction;
+        pos.right =  motorR.sensor->getMechanicalAngle() * motorR.sensor_direction;
+
+        return pos;
+    };
+    MotorsVelocity DifferentialKinematics::getMotorsVelocity(){
+        MotorsVelocity vel;
+        vel.left = motorL.shaft_velocity;
+        vel.right = motorR.shaft_velocity;
+        return vel;
+    };
 
     void DifferentialKinematics::move(float speed, float radius) { //negative radius + negative speed when leftturn = counterclockwise
         
@@ -160,6 +199,7 @@ namespace SmallRobots {
         return curRobotRadius;
     };
 
+<<<<<<< Updated upstream
     //------------------------------------------------------------------------------------------------------------------
     //  DifferentialPathPlanner
     //------------------------------------------------------------------------------------------------------------------
@@ -469,6 +509,8 @@ namespace SmallRobots {
     }; 
 
 
+=======
+>>>>>>> Stashed changes
   
     
 }; // namespace SmallRobots

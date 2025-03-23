@@ -1,10 +1,17 @@
 #include "globalStructs.h"
-// #include "math.h"
+
 
 
 
 namespace SmallRobots {
 
+
+  Vector::Vector (float x, float y, float z){
+    this->x = x;
+    this->y = y;
+    this->z = z;
+
+  };
 
 Vector rotation (Vector& dir, float& angle)
 {
@@ -41,8 +48,8 @@ float circularArcAngleCCW( Vector& dirA, Vector& A, Vector& B) {
   Vector AB = B - A;
   float sca = scalarProduct(unitA, AB);
   float beta = acos( sca / (magnitude (unitA) * magnitude(AB) ) );
-  float alpha = 2*PI - 2*beta;
-  return alpha;
+  float alpha = 2*M_PI - 2*beta;
+  return alpha; 
 }
 
 

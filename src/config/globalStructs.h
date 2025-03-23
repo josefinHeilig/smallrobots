@@ -1,11 +1,11 @@
 
 #pragma once
 #include <inttypes.h>
-#include "simplefoc/I2CCommanderMaster.h"
+#include <math.h>
 
 struct MotorsStatus {
-    simplefoc::FOCMotorStatus left;
-    simplefoc::FOCMotorStatus right;
+    int left;// simplefoc::FOCMotorStatus left;
+    int right;// simplefoc::FOCMotorStatus right;
 };
 
 struct MotorsPosition {
@@ -23,20 +23,12 @@ struct MotorsVelocity {
 
 namespace SmallRobots {
 
-    typedef struct 
+    typedef struct Pose
     {
-        float x = 0;
-        float y = 0;
-        float angle = 0;
-    } Pose;
-
-
-    typedef struct 
-        {
-            float r = 0;
-            float g = 0;
-            float b = 0;
-        } RGBColor;
+        float x =0;
+        float y =0;
+        float angle=0;
+    } Pose ;
 
     enum PATHBEHAVIOURS {
 
@@ -55,6 +47,7 @@ namespace SmallRobots {
         float y = 0.f;
         float z = 0.f;
 
+        Vector (float x=0, float y=0, float z=0);
         // Vector& operator*(float v) {
            
         //    this->x *=v;
@@ -70,7 +63,7 @@ namespace SmallRobots {
         //    this->z +=A.z;
         //    return *this;
         // };
-
+   
         Vector operator*(float v) {
            Vector B;
            B.x = this->x *v;

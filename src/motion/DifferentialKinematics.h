@@ -4,18 +4,29 @@
 #include <stdint.h>
 #include <limits>
 #include "Arduino.h"
-#include "../config/globalStructs.h"
+#include "./config/globalStructs.h"
 
+#include <SimpleFOC.h>
+#include "encoders/sc60228/MagneticSensorSC60228.h"
+
+#define ZOOIDBOT_WHEELBASE 52.6  //mm org: 0.55 dm
+#define ZOOIDBOT_WHEEL_D   30.6  //mm org: 0.31 dm 
 
 #define RADIUS_STREIGHT (std::numeric_limits<float>::infinity())
 #define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why?
+
+extern MagneticSensorSC60228 sensorL;
+extern MagneticSensorSC60228 sensorR;
+extern BLDCMotor motorL;
+extern BLDCMotor motorR;
+
 
 namespace SmallRobots {
 
 
     class DifferentialKinematics {
         public:
-            DifferentialKinematics(float _wheel_base, float wheel_diameter);
+            DifferentialKinematics(float _wheel_base= ZOOIDBOT_WHEELBASE, float wheel_diameter = ZOOIDBOT_WHEEL_D);
             ~DifferentialKinematics();
 
             //move
@@ -26,23 +37,23 @@ namespace SmallRobots {
             //left arc backward / ccw: speed negative and radius positive
             //right arc backward /cw : speed positive and radius negative
 
-            virtual void move(float speed, float radius = RADIUS_STREIGHT); 
-            virtual void turnLeftForward(float speed, float radius);
-            virtual void turnRightForward(float speed, float radius);
-            virtual void turnLeftBackward(float speed, float radius);
-            virtual void turnRightBackward(float speed, float radius);
+            void move(float speed, float radius = RADIUS_STREIGHT); 
+            void turnLeftForward(float speed, float radius);
+            void turnRightForward(float speed, float radius);
+            void turnLeftBackward(float speed, float radius);
+            void turnRightBackward(float speed, float radius);
 
-            virtual void rotate(float speed);
+            void rotate(float speed);
 
-            virtual void setSpeed(float left, float right) = 0;
-            virtual void stop() = 0;
-            virtual void enable() = 0;
-            virtual void disable() = 0;
+            void setSpeed(float left, float right);
+            void stop();
+            void enable();
+            void disable();
 
             Pose wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose,String curDirName);
 
-            virtual MotorsPosition getMotorsPosition()=0;
-            virtual MotorsVelocity getMotorsVelocity()=0;
+            MotorsPosition getMotorsPosition();
+            MotorsVelocity getMotorsVelocity();
 
             float wheel_base;
             float half_wheel_base;
@@ -56,12 +67,17 @@ namespace SmallRobots {
             void setCurRobotRadius(float _curRobotRadius);
             float getCurRobotRadius();
 
+<<<<<<< Updated upstream
+=======
+            float globalCoordinateSystemOffsetAngle = M_PI/2.0;
+>>>>>>> Stashed changes
 
         private:
             Pose pose;
             float deltaTseconds;
             float curRobotSpeed, curRobotRadius; //updated by move, so in case speed gets updated, the move function can be called with the last set values
 
+<<<<<<< Updated upstream
     };
 
 
@@ -150,5 +166,13 @@ namespace SmallRobots {
 
     };
 
+=======
+            //ODOMETRY MOTOR
+            Pose curPose = Pose();            
+            int lastTime=0, deltaT=0; //delat T, read in millis,later converted to seconds to get m/s as unit ???
+    };
+
+
+>>>>>>> Stashed changes
 
 }; // namespace SmallRobots

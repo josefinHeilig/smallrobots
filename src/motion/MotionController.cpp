@@ -9,6 +9,8 @@ namespace SmallRobots {
     //------------------------------------------------------------------------------------------------------------------
 
     MotionController::MotionController(DifferentialKinematics& drive) : kinematics(drive) {
+        curPose = Pose();
+        addPoseToPath(curPose);
     };
 
     MotionController::~MotionController() {
@@ -16,12 +18,13 @@ namespace SmallRobots {
 
     void MotionController::addPoseToPath(Pose p)
     {
-        path.push_back(p);
+        path.push_back(p); //at the end of path, continue current path
 
     };
     void MotionController::setPoseToReplacePath(Pose p)
     {
-        path.clear();
+        path.clear(); //stop continueing currentpath and st
+        addPoseToPath(curPose); //so a path segment is between the start and the new target pose
         path.push_back(p);
 
     };
@@ -114,8 +117,10 @@ namespace SmallRobots {
         if (pathPlanner.arcDirName12.equals ("S")) {
 
             // Serial.println ("2.) -"+ pathPlanner.arcDirName12+ "- with distance: "+ pathPlanner.lineLength+ "+ from start: "+ pathPlanner.lineStart.x + ", " +  pathPlanner.lineStart.y + " to end: "+ pathPlanner.lineEnd.x + ", " + pathPlanner.lineEnd.y);
-            
-            targetPose = Pose(pathPlanner.lineEnd.x, pathPlanner.lineEnd.y, curPose.angle);
+            targetPose = Pose() ;
+            targetPose.x = pathPlanner.lineEnd.x;
+            targetPose.y = pathPlanner.lineEnd.y;
+            targetPose.angle = curPose.angle;
             // GO Straight
             kinematics.move(vRobot);
 
